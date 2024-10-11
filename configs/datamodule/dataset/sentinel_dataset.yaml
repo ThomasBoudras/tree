@@ -1,0 +1,54 @@
+input_sources: # always s2 first, we want RGB , the first 3 channels of the concatenation  
+  - s2
+  - s1
+input_path: ./
+target_path: ./
+target_unit: dm
+geometries_path: ./
+replace_nan_by_zero_in_target: True
+min_year: 2021
+max_year: 2023
+target_resolution: 2.5
+zoom_factor: 4
+
+train_dataset:
+  _target_: src.datamodules.datasets.sentinel_dataset.sentinelDataset
+  input_sources: ${datamodule.dataset.input_sources} 
+  input_path: ${datamodule.dataset.input_path} 
+  target_path: ${datamodule.dataset.target_path}
+  target_unit: ${datamodule.dataset.target_unit} 
+  geometries_path: ${datamodule.dataset.geometries_path} 
+  replace_nan_by_zero_in_target: ${datamodule.dataset.replace_nan_by_zero_in_target} 
+  min_year: ${datamodule.dataset.min_year} 
+  max_year: ${datamodule.dataset.max_year} 
+  target_resolution: ${datamodule.dataset.target_resolution}
+  zoom_factor: ${datamodule.dataset.zoom_factor}  
+  split: train
+
+val_dataset:
+  _target_: src.datamodules.datasets.sentinel_dataset.sentinelDataset
+  input_sources: ${datamodule.dataset.input_sources} 
+  input_path: ${datamodule.dataset.input_path} 
+  target_path: ${datamodule.dataset.target_path}
+  target_unit: ${datamodule.dataset.target_unit} 
+  geometries_path: ${datamodule.dataset.geometries_path} 
+  replace_nan_by_zero_in_target: ${datamodule.dataset.replace_nan_by_zero_in_target} 
+  min_year: ${datamodule.dataset.min_year} 
+  max_year: ${datamodule.dataset.max_year} 
+  target_resolution: ${datamodule.dataset.target_resolution}
+  zoom_factor: ${datamodule.dataset.zoom_factor}  
+  split: val
+
+test_dataset:
+  _target_: src.datamodules.datasets.sentinel_dataset.sentinelDataset
+  input_sources: ${datamodule.dataset.input_sources} 
+  input_path: ${datamodule.dataset.input_path} 
+  target_path: ${datamodule.dataset.target_path}
+  target_unit: ${datamodule.dataset.target_unit} 
+  geometries_path: ${datamodule.dataset.geometries_path} 
+  replace_nan_by_zero_in_target: ${datamodule.dataset.replace_nan_by_zero_in_target} 
+  min_year: ${datamodule.dataset.min_year} 
+  max_year: ${datamodule.dataset.max_year} 
+  target_resolution: ${datamodule.dataset.target_resolution}
+  zoom_factor: ${datamodule.dataset.zoom_factor}  
+  split: test
