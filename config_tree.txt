@@ -1,0 +1,296 @@
+CONFIG
+├── trainer
+│   └── _target_: lightning.pytorch.trainer.Trainer              
+│       gpus: 0                                          
+│       min_epochs: 1                                    
+│       max_epochs: 100                                  
+│       weights_summary: null                            
+│       progress_bar_refresh_rate: 10                    
+│       resume_from_checkpoint: null                     
+│                                                        
+├── model
+│   └── network:                                         
+│         regression:                                    
+│           _target_: src.models.networks.regression.unet
+│           n_channels_in: 12                            
+│         super_resolution:                              
+│           _target_: src.models.networks.super_resolutio
+│           n_resblocks: 32                              
+│           scale: 4                                     
+│           n_feats: 256                                 
+│           n_channel: 12                                
+│           res_scale: 0.1                               
+│           pretrained_model_path: /home/thom_bdrs/travai
+│         instance:                                      
+│           _target_: src.models.networks.end_2_end.end2E
+│           regression_model:                            
+│             _target_: src.models.networks.regression.un
+│             n_channels_in: 12                          
+│           super_resolution_model:                      
+│             _target_: src.models.networks.super_resolut
+│             n_resblocks: 32                            
+│             scale: 4                                   
+│             n_feats: 256                               
+│             n_channel: 12                              
+│             res_scale: 0.1                             
+│             pretrained_model_path: /home/thom_bdrs/trav
+│       loss:                                            
+│         _target_: torch.nn.SmoothL1Loss                
+│         reduction: mean                                
+│         beta: 1.0                                      
+│       metrics:                                         
+│         tree_cover_threshold: 2                        
+│         forest_mask_path: /home/thom_bdrs/travail/copen
+│         classification_path: /home/thom_bdrs/travail/co
+│         classes_to_keep:                               
+│         - 5                                            
+│         train_metrics:                                 
+│           _target_: src.models.metrics.OpenCanopyMetric
+│           tree_cover_threshold: 2                      
+│           forest_mask_path: /home/thom_bdrs/travail/cop
+│           classification_path: /home/thom_bdrs/travail/
+│           classes_to_keep:                             
+│           - 5                                          
+│         val_metrics:                                   
+│           _target_: src.models.metrics.metrics.OpenCano
+│           tree_cover_threshold: 2                      
+│           forest_mask_path: /home/thom_bdrs/travail/cop
+│           classification_path: /home/thom_bdrs/travail/
+│           classes_to_keep:                             
+│           - 5                                          
+│         test_metrics:                                  
+│           _target_: src.models.metrics.metrics.OpenCano
+│           tree_cover_threshold: 2                      
+│           forest_mask_path: /home/thom_bdrs/travail/cop
+│           classification_path: /home/thom_bdrs/travail/
+│           classes_to_keep:                             
+│           - 5                                          
+│       optimizer:                                       
+│         _target_: torch.optim.Adam                     
+│         _partial_: true                                
+│         lr: 0.001                                      
+│         weight_decay: 0.0                              
+│       scheduler:                                       
+│         _target_: torch.optim.lr_scheduler.ReduceLROnPl
+│         _partial_: true                                
+│         mode: min                                      
+│         factor: 0.1                                    
+│         patience: 10                                   
+│       instance:                                        
+│         _target_: src.models.module.Module             
+│         optimizer:                                     
+│           _target_: torch.optim.Adam                   
+│           _partial_: true                              
+│           lr: 0.001                                    
+│           weight_decay: 0.0                            
+│         scheduler:                                     
+│           _target_: torch.optim.lr_scheduler.ReduceLROn
+│           _partial_: true                              
+│           mode: min                                    
+│           factor: 0.1                                  
+│           patience: 10                                 
+│         network:                                       
+│           regression:                                  
+│             _target_: src.models.networks.regression.un
+│             n_channels_in: 12                          
+│           super_resolution:                            
+│             _target_: src.models.networks.super_resolut
+│             n_resblocks: 32                            
+│             scale: 4                                   
+│             n_feats: 256                               
+│             n_channel: 12                              
+│             res_scale: 0.1                             
+│             pretrained_model_path: /home/thom_bdrs/trav
+│           instance:                                    
+│             _target_: src.models.networks.end_2_end.end
+│             regression_model:                          
+│               _target_: src.models.networks.regression.
+│               n_channels_in: 12                        
+│             super_resolution_model:                    
+│               _target_: src.models.networks.super_resol
+│               n_resblocks: 32                          
+│               scale: 4                                 
+│               n_feats: 256                             
+│               n_channel: 12                            
+│               res_scale: 0.1                           
+│               pretrained_model_path: /home/thom_bdrs/tr
+│         loss:                                          
+│           _target_: torch.nn.SmoothL1Loss              
+│           reduction: mean                              
+│           beta: 1.0                                    
+│         train_metrics:                                 
+│           _target_: src.models.metrics.OpenCanopyMetric
+│           tree_cover_threshold: 2                      
+│           forest_mask_path: /home/thom_bdrs/travail/cop
+│           classification_path: /home/thom_bdrs/travail/
+│           classes_to_keep:                             
+│           - 5                                          
+│         val_metrics:                                   
+│           _target_: src.models.metrics.metrics.OpenCano
+│           tree_cover_threshold: 2                      
+│           forest_mask_path: /home/thom_bdrs/travail/cop
+│           classification_path: /home/thom_bdrs/travail/
+│           classes_to_keep:                             
+│           - 5                                          
+│         test_metrics:                                  
+│           _target_: src.models.metrics.metrics.OpenCano
+│           tree_cover_threshold: 2                      
+│           forest_mask_path: /home/thom_bdrs/travail/cop
+│           classification_path: /home/thom_bdrs/travail/
+│           classes_to_keep:                             
+│           - 5                                          
+│                                                        
+├── datamodule
+│   └── dataset:                                         
+│         input_sources:                                 
+│         - s2                                           
+│         - s1                                           
+│         input_path: /home/thom_bdrs/travail/copenhague/
+│         target_path: /home/thom_bdrs/travail/copenhague
+│         target_unit: dm                                
+│         geometries_path: /home/thom_bdrs/travail/copenh
+│         replace_nan_by_zero_in_target: true            
+│         min_year: 2021                                 
+│         max_year: 2023                                 
+│         target_resolution: 2.5                         
+│         zoom_factor: 4                                 
+│         train_dataset:                                 
+│           _target_: src.datamodules.datasets.sentinel_d
+│           input_sources:                               
+│           - s2                                         
+│           - s1                                         
+│           input_path: /home/thom_bdrs/travail/copenhagu
+│           target_path: /home/thom_bdrs/travail/copenhag
+│           target_unit: dm                              
+│           geometries_path: /home/thom_bdrs/travail/cope
+│           replace_nan_by_zero_in_target: true          
+│           min_year: 2021                               
+│           max_year: 2023                               
+│           target_resolution: 2.5                       
+│           zoom_factor: 4                               
+│           split: train                                 
+│         val_dataset:                                   
+│           _target_: src.datamodules.datasets.sentinel_d
+│           input_sources:                               
+│           - s2                                         
+│           - s1                                         
+│           input_path: /home/thom_bdrs/travail/copenhagu
+│           target_path: /home/thom_bdrs/travail/copenhag
+│           target_unit: dm                              
+│           geometries_path: /home/thom_bdrs/travail/cope
+│           replace_nan_by_zero_in_target: true          
+│           min_year: 2021                               
+│           max_year: 2023                               
+│           target_resolution: 2.5                       
+│           zoom_factor: 4                               
+│           split: val                                   
+│         test_dataset:                                  
+│           _target_: src.datamodules.datasets.sentinel_d
+│           input_sources:                               
+│           - s2                                         
+│           - s1                                         
+│           input_path: /home/thom_bdrs/travail/copenhagu
+│           target_path: /home/thom_bdrs/travail/copenhag
+│           target_unit: dm                              
+│           geometries_path: /home/thom_bdrs/travail/cope
+│           replace_nan_by_zero_in_target: true          
+│           min_year: 2021                               
+│           max_year: 2023                               
+│           target_resolution: 2.5                       
+│           zoom_factor: 4                               
+│           split: test                                  
+│       instance:                                        
+│         _target_: src.datamodules.datamodule.Datamodule
+│         patch_size_input: 128                          
+│         patch_size_target: 512                         
+│         batch_size: 16                                 
+│         num_workers: 1                                 
+│         persistent_workers: true                       
+│         max_n_inputs_for_moments_computation: 300      
+│         max_n_inputs_per_epoch: 100                    
+│         train_dataset:                                 
+│           _target_: src.datamodules.datasets.sentinel_d
+│           input_sources:                               
+│           - s2                                         
+│           - s1                                         
+│           input_path: /home/thom_bdrs/travail/copenhagu
+│           target_path: /home/thom_bdrs/travail/copenhag
+│           target_unit: dm                              
+│           geometries_path: /home/thom_bdrs/travail/cope
+│           replace_nan_by_zero_in_target: true          
+│           min_year: 2021                               
+│           max_year: 2023                               
+│           target_resolution: 2.5                       
+│           zoom_factor: 4                               
+│           split: train                                 
+│         val_dataset:                                   
+│           _target_: src.datamodules.datasets.sentinel_d
+│           input_sources:                               
+│           - s2                                         
+│           - s1                                         
+│           input_path: /home/thom_bdrs/travail/copenhagu
+│           target_path: /home/thom_bdrs/travail/copenhag
+│           target_unit: dm                              
+│           geometries_path: /home/thom_bdrs/travail/cope
+│           replace_nan_by_zero_in_target: true          
+│           min_year: 2021                               
+│           max_year: 2023                               
+│           target_resolution: 2.5                       
+│           zoom_factor: 4                               
+│           split: val                                   
+│         test_dataset:                                  
+│           _target_: src.datamodules.datasets.sentinel_d
+│           input_sources:                               
+│           - s2                                         
+│           - s1                                         
+│           input_path: /home/thom_bdrs/travail/copenhagu
+│           target_path: /home/thom_bdrs/travail/copenhag
+│           target_unit: dm                              
+│           geometries_path: /home/thom_bdrs/travail/cope
+│           replace_nan_by_zero_in_target: true          
+│           min_year: 2021                               
+│           max_year: 2023                               
+│           target_resolution: 2.5                       
+│           zoom_factor: 4                               
+│           split: test                                  
+│         normalization_save_path: /home/thom_bdrs/travai
+│         normalization_constants: null                  
+│                                                        
+├── callbacks
+│   └── model_checkpoint:                                
+│         _target_: lightning.callbacks.ModelCheckpoint  
+│         monitor: val/acc                               
+│         mode: max                                      
+│         save_top_k: 1                                  
+│         save_last: true                                
+│         verbose: false                                 
+│         dirpath: checkpoints/                          
+│         filename: epoch_{epoch:03d}                    
+│         auto_insert_metric_name: false                 
+│       early_stopping:                                  
+│         _target_: lightning.callbacks.EarlyStopping    
+│         monitor: val/acc                               
+│         mode: max                                      
+│         patience: 10                                   
+│         min_delta: 0                                   
+│                                                        
+├── logger
+│   └── wandb:                                           
+│         _target_: lightning.pytorch.loggers.wandb.WandbLogger  
+│         project: tree                                  
+│         name: debug                                    
+│         save_dir: /home/thom_bdrs/travail/copenhague/tr
+│         offline: false                                 
+│         id: null                                       
+│         log_model: false                               
+│         prefix: ''                                     
+│         job_type: train                                
+│         group: super_resolution                        
+│         tags:                                          
+│         - super_resolution                             
+│         - canopy                                       
+│         - ESDR                                         
+│         - U-Net                                        
+│                                                        
+└── seed
+    └── 12345                                            
