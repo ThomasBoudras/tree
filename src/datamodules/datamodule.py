@@ -7,7 +7,8 @@ from torchvision.transforms import v2
 from tqdm import tqdm
 from pathlib import Path
 
-from src.utils.dataset_utils import BottomLeftCrop, RandomSubsetSampler
+from src.utils.dataset_utils import BottomLeftCrop, SubsetSampler
+
 
 from src.utils import utils
 
@@ -105,9 +106,9 @@ class Datamodule(L.LightningDataModule):
         self.test_dataset.update_transforms(self.transform_input, self.transform_target)
 
 
-    def train_dataloader(self):
+    def train_dataloader(self,  disable_shuffle  = False):
         # Setting pin_memory=True can enable faster transfer of data to the GPU
-        sampler, shuffle = self._get_a_sampler(self.train_dataset, self.max_n_inputs_per_epoch)
+        sampler, shuffle = self._get_a_sampler(self.train_dataset, self.max_n_inputs_per_epoch, disable_shuffle)
 
         return DataLoader(
             self.train_dataset,
@@ -121,8 +122,8 @@ class Datamodule(L.LightningDataModule):
             collate_fn=self.train_dataset.custom_collate_fn
         )
 
-    def val_dataloader(self):
-        sampler, shuffle = self._get_a_sampler(self.val_dataset, self.max_n_inputs_per_epoch)
+    def val_dataloader(self, disable_shuffle  = False):
+        sampler, shuffle = self._get_a_sampler(self.val_dataset, self.max_n_inputs_per_epoch, disable_shuffle)
 
         return DataLoader(
             self.val_dataset,
@@ -135,8 +136,8 @@ class Datamodule(L.LightningDataModule):
             collate_fn=self.val_dataset.custom_collate_fn
         )
 
-    def test_dataloader(self):
-        sampler, shuffle = self._get_a_sampler(self.test_dataset, self.max_n_inputs_per_epoch)
+    def test_dataloader(self, disable_shuffle  = False):
+        sampler, shuffle = self._get_a_sampler(self.test_dataset, self.max_n_inputs_per_epoch, disable_shuffle)
 
         return DataLoader(
             self.test_dataset,
@@ -149,12 +150,17 @@ class Datamodule(L.LightningDataModule):
             collate_fn=self.test_dataset.custom_collate_fn
         )
     
-    def _get_a_sampler(self, dataset, max_n_inputs) :
+    def _get_a_sampler(self, dataset, max_n_inputs, disable_shuffle) :
         if self.max_n_inputs_per_epoch is not None:
-            sampler = RandomSubsetSampler(dataset, min(len(dataset), max_n_inputs))
+            if disable_shuffle : 
+                sampler = SubsetSampler(dataset, max_n_inputs, shuffle = False)
+            else : 
+                sampler = SubsetSampler(dataset, max_n_inputs, shuffle = True)
             shuffle = False
-        else:
-            sampler = None
-            shuffle = True 
+        else :
+            sampler = None 
+            shuffle = True
+                
+
         return sampler, shuffle
 

@@ -1,0 +1,8 @@
+_target_: src.models.networks.super_resolution.rcan.RCAN
+n_resblocks: 20
+scale: 4
+n_feats: 64
+n_channels: 12
+n_resgroups: 10
+reduction: 16
+pretrained_model_path: null

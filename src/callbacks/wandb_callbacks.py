@@ -142,12 +142,12 @@ class LogImagePredictions(Callback):
         self.ready = True
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        self.save_images(trainer, pl_module, trainer.datamodule.val_dataloader(), stage="val")
+        self._save_images(trainer, pl_module, trainer.datamodule.val_dataloader(disable_shuffle=True), stage="val")
 
     def on_test_end(self, trainer, pl_module):
-        self.save_images(trainer, pl_module, trainer.datamodule.test_dataloader(), stage="test")
+        self._save_images(trainer, pl_module, trainer.datamodule.test_dataloader(disable_shuffle=True), stage="test")
 
-    def save_images(self, trainer, pl_module, dataloader, stage):
+    def _save_images(self, trainer, pl_module, dataloader, stage):
 
         if self.ready:
             logger = get_wandb_logger(trainer=trainer)
@@ -171,10 +171,10 @@ class LogImagePredictions(Callback):
             for i, pred in enumerate(preds) :
                 pred_image = pred
                 target_image = targets[i]
-                pred_image, target_image = self.normalize_pred_and_target_with_target(pred_tensor=pred_image, target_tensor=target_image)
+                pred_image, target_image = self._normalize_pred_and_target_with_target(pred_tensor=pred_image, target_tensor=target_image)
 
-                target_image = self.color_transform(target_image)
-                pred_image = self.color_transform(pred_image)
+                target_image = self._color_transform(target_image)
+                pred_image = self._color_transform(pred_image)
 
                 target_images.append(target_image)
                 pred_images.append(pred_image)
@@ -195,7 +195,7 @@ class LogImagePredictions(Callback):
             )
 
 
-    def normalize_pred_and_target_with_target(self, pred_tensor, target_tensor):
+    def _normalize_pred_and_target_with_target(self, pred_tensor, target_tensor):
         target_min = target_tensor.min()
         target_max = target_tensor.max()
 
@@ -209,7 +209,7 @@ class LogImagePredictions(Callback):
         
         return normalized_pred, normalized_target
 
-    def color_transform(self, tensor):
+    def _color_transform(self, tensor):
         # Convertir le tensor normalisé en RGB avec noir -> blanc et blanc -> vert
         white = torch.tensor([1, 1, 1]).view(3, 1, 1).to(device=self.device)  # Blanc
         green = torch.tensor([0, 0.5, 0]).view(3, 1, 1).to(device=self.device)  # Vert

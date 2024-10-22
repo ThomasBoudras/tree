@@ -135,17 +135,20 @@ def found_nearest_date(date, min_year, max_year):
                 min_deltatime = delta_time
 
     return final_date, final_year
+    
 
-
-class RandomSubsetSampler(Sampler):
-    # NB this is a bit different from torch.utils.data.SubsetRandomSampler
-    def __init__(self, data_source, num_samples):
+class SubsetSampler(Sampler):
+    def __init__(self, data_source, num_samples, shuffle):
         self.data_source = data_source
-        self.num_samples = num_samples
+        self.num_samples = min(num_samples, len(data_source))
+        self.shuffle = shuffle
 
     def __iter__(self):
-        # Randomly select num_samples indices
-        indices = np.random.choice(len(self.data_source), self.num_samples, replace=False)
+        if self.shuffle :
+            indices = np.random.choice(len(self.data_source), self.num_samples, replace=False)
+        else :
+            indices = list(range(self.num_samples))
+
         return iter(indices)
 
     def __len__(self):

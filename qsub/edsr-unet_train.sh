@@ -10,7 +10,7 @@
 ### Only send mail when job is aborted or terminates abnormally
 #PBS -m e
 ### Number of nodes
-#PBS -l nodes=1:ppn=16
+#PBS -l nodes=1:ppn=16:gpus=1
 ### Memory
 #PBS -l mem=16gb
 ### Requesting time - format is <days>:<hours>:<minutes>:<seconds> (here, 12 hours)

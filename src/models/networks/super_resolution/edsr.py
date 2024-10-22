@@ -4,8 +4,10 @@ import math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
+from src.utils import utils
+
+log = utils.get_logger(__name__)
 
 
 class EDSR(nn.Module):
@@ -14,7 +16,7 @@ class EDSR(nn.Module):
             n_resblocks,
             scale,
             n_feats,
-            n_channel,
+            n_channels,
             res_scale,
             pretrained_model_path,
             ):
@@ -25,7 +27,7 @@ class EDSR(nn.Module):
         act = nn.ReLU(True)
 
         # define head module
-        m_head = [conv(n_channel, n_feats, kernel_size)]
+        m_head = [conv(n_channels, n_feats, kernel_size)]
 
         # define body module
         m_body = [
@@ -38,7 +40,7 @@ class EDSR(nn.Module):
         # define tail module
         m_tail = [
             Upsampler(conv, scale, n_feats, act=False),
-            conv(n_feats, n_channel, kernel_size)
+            conv(n_feats, n_channels, kernel_size)
         ]
 
         self.head = nn.Sequential(*m_head)
@@ -63,6 +65,8 @@ class EDSR(nn.Module):
         return x 
     
     def load_partial_weight(self, pretrained_model) :
+        log.info(f"Using the pre-trained model {pretrained_model} to initialise the model")
+
         load_from = torch.load(pretrained_model,  map_location=torch.device('cpu'), weights_only=True)
         for module_name , module_tensor in load_from.items():
             if module_name == "head.0.weight"  :
@@ -76,6 +80,7 @@ class EDSR(nn.Module):
 
 
         self.load_state_dict(load_from, strict=False)
+
 
 
 

@@ -1,8 +1,8 @@
 # @package _global_
 seed: 12345
 
-run_name: debug
-run_version: debug_cb
+run_name: SR_regre_end2end
+run_version: EDSR_Unet_SL1
 data_dir: /home/projects/ku_00196/people/thobou/data
 
 datamodule:
@@ -10,7 +10,7 @@ datamodule:
         num_workers: 8
         persistent_workers: True
         max_n_inputs_for_moments_computation: 100
-        max_n_inputs_per_epoch : 200
+        max_n_inputs_per_epoch : null
         normalization_save_path: ${work_dir}/normalization_values/
         patch_size_input: 64
         patch_size_target: 256
@@ -20,7 +20,7 @@ datamodule:
         target_path: ${data_dir}/lidar/
         geometries_path : ${data_dir}/utils/geometries.geojson
         min_year: 2021
-        max_year: 2021
+        max_year: 2023
 
 
 model:
