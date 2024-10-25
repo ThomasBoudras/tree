@@ -1,0 +1,7 @@
+_target_: src.models.networks.super_resolution.edsr.EDSR
+n_resblocks: 32
+scale: 4
+n_feats: 256
+n_channels: 12
+res_scale: 0.1
+pretrained_model_path: null
