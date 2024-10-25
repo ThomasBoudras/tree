@@ -129,10 +129,11 @@ class LogImagePredictions(Callback):
         https://wandb.ai/wandb/wandb-lightning/reports/Image-Classification-using-PyTorch-Lightning--VmlldzoyODk1NzY
     """
 
-    def __init__(self, num_samples: int = 8):
+    def __init__(self, num_samples: int, freq_train):
         super().__init__()
         self.num_samples = num_samples
         self.ready = True
+        self.freq_train = freq_train
 
     def on_sanity_check_start(self, trainer, pl_module):
         self.ready = False
@@ -146,6 +147,10 @@ class LogImagePredictions(Callback):
 
     def on_test_end(self, trainer, pl_module):
         self._save_images(trainer, pl_module, trainer.datamodule.test_dataloader(disable_shuffle=True), stage="test")
+
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+        if batch_idx % self.freq_train == 0:
+            self._save_images(trainer, pl_module, trainer.datamodule.train_dataloader(disable_shuffle=True), stage=f"test_{batch_idx//self.freq_train}")
 
     def _save_images(self, trainer, pl_module, dataloader, stage):
 

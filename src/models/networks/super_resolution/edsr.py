@@ -8,7 +8,7 @@ import torch.nn as nn
 from src.utils import utils
 
 log = utils.get_logger(__name__)
-
+import numpy as np
 
 class EDSR(nn.Module):
     def __init__(
@@ -71,14 +71,15 @@ class EDSR(nn.Module):
 
         load_from = torch.load(pretrained_model,  map_location=torch.device('cpu'), weights_only=True)
         for module_name , module_tensor in load_from.items():
+            nb_repeat = int(np.ceil(self.n_channels/3))
             if module_name == "head.0.weight"  :
-                load_from[module_name] = module_tensor.repeat(1, int(np.ceil(self.n_channels/3)), 1, 1)[:,:self.n_channels, :,:]
+                load_from[module_name] = module_tensor.repeat(1, nb_repeat, 1, 1)[:,:self.n_channels, :,:]
             
             if module_name == "tail.1.weight" :
-                load_from[module_name] = module_tensor.repeat(int(np.ceil(self.n_channels/3)), 1, 1, 1)[:self.n_channels, :, :, :]
+                load_from[module_name] = module_tensor.repeat(nb_repeat, 1, 1, 1)[:self.n_channels, :, :, :]
 
             if module_name == "tail.1.bias" :
-                load_from[module_name] = module_tensor.repeat(int(np.ceil(self.n_channels/3)))[:self.n_channels]
+                load_from[module_name] = module_tensor.repeat(nb_repeat)[:self.n_channels]
 
 
         self.load_state_dict(load_from, strict=False)
