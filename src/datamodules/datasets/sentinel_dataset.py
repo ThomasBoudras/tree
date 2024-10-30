@@ -20,7 +20,7 @@ class sentinelDataset(Dataset):
         min_year: int,
         max_year: int,
         target_resolution: float,
-        zoom_factor : int,
+        input_resolution : int,
         split: str = None,
         transform_input : v2 = None,
         transform_target: v2 = None,
@@ -36,7 +36,7 @@ class sentinelDataset(Dataset):
         self.max_year = max_year
         self.target_unit = target_unit
         self.target_resolution = target_resolution
-        self.zoom_factor = zoom_factor
+        self.input_resolution = input_resolution
         self.transform_input = transform_input
         self.transform_target = transform_target
         self.geometries = (
@@ -87,7 +87,7 @@ class sentinelDataset(Dataset):
             input_source = get_window(
                 image_path=vrt_path,
                 bounds=bounds,
-                resolution=(self.target_resolution*self.zoom_factor)
+                resolution=(self.input_resolution)
                 )
 
             input_source = input_source.astype(np.float32).transpose(1, 2, 0)

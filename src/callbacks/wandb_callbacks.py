@@ -143,16 +143,16 @@ class LogImagePredictions(Callback):
         self.ready = True
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        self._save_images(trainer, pl_module, trainer.datamodule.val_dataloader(disable_shuffle=True), stage="val")
+        self._save_images(trainer, pl_module, trainer.datamodule.val_dataset, stage="val")
 
     def on_test_end(self, trainer, pl_module):
-        self._save_images(trainer, pl_module, trainer.datamodule.test_dataloader(disable_shuffle=True), stage="test")
+        self._save_images(trainer, pl_module, trainer.datamodule.test_dataset, stage="test")
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        if batch_idx % self.freq_train == 0:
-            self._save_images(trainer, pl_module, trainer.datamodule.train_dataloader(disable_shuffle=True), stage=f"test_{batch_idx//self.freq_train}")
+        if self.freq_train and batch_idx % self.freq_train == 0:
+            self._save_images(trainer, pl_module, trainer.datamodule.train_dataset, stage=f"train_step_{batch_idx}")
 
-    def _save_images(self, trainer, pl_module, dataloader, stage):
+    def _save_images(self, trainer, pl_module, dataset, stage):
 
         if self.ready:
             logger = get_wandb_logger(trainer=trainer)
@@ -161,16 +161,14 @@ class LogImagePredictions(Callback):
 
 
             # get a validation batch from the validation dat loader
-            samples = next(iter(dataloader))
-            inputs, targets, _ = samples
-
-            self.num_samples = min(self.num_samples, len(inputs))
-            inputs = inputs[:self.num_samples].to(device=pl_module.device)
-            targets = targets[:self.num_samples].to(device=pl_module.device)
+            samples = [dataset[i] for i in range(self.num_samples)]
+            inputs, targets, _ = zip(*samples)
+            inputs = torch.stack(inputs).to(device=pl_module.device)
+            targets = torch.stack(targets).to(device=pl_module.device)            
 
             preds = pl_module(inputs).to(device=pl_module.device)
 
-            input_images = inputs[:,:3,:,:]
+            input_images = inputs[:,[2,1,0],:,:]
             target_images = []
             pred_images = []
             for i, pred in enumerate(preds) :
@@ -192,9 +190,9 @@ class LogImagePredictions(Callback):
             curr_epoch = str(trainer.current_epoch)
             experiment.log(
                 {
-                    f"input_images/epoch_{curr_epoch}": wandb.Image(input_images),
-                    f"target_images/epoch_{curr_epoch}": wandb.Image(target_images),
-                    f"predicted_images/epoch_{curr_epoch}": wandb.Image(pred_images),
+                    f"input_images/{stage}/epoch_{curr_epoch}": wandb.Image(input_images),
+                    f"target_images/{stage}/epoch_{curr_epoch}": wandb.Image(target_images),
+                    f"predicted_images/{stage}/epoch_{curr_epoch}": wandb.Image(pred_images),
 
                 }
             )

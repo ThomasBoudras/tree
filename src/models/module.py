@@ -41,7 +41,7 @@ class Module(LightningModule):
         self.log(
                 name=os.path.join(stage, "loss"),
                 value=loss, 
-                on_step=False, 
+                on_step=True,
                 on_epoch=True, 
                 prog_bar=False
                 )
@@ -71,7 +71,7 @@ class Module(LightningModule):
 
 
     def test_step(self, batch: Any, batch_idx: int):
-        loss, preds, targets = self.step(batch=batch, stage="val", metrics_function=self.val_metrics)
+        loss, preds, targets = self.step(batch=batch, stage="val", metrics_function=self.test_metrics)
         return {"loss": loss, "preds": preds, "targets": targets}
 
     def configure_optimizers(self):

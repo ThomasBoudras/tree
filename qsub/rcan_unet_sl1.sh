@@ -3,10 +3,10 @@
 ### Account information
 #PBS -W group_list=ku_00196 -A ku_00196
 ### Job name (comment out the next line to get the name of the script used as the job name)
-#PBS -N ESDR_UNet_SL1
+#PBS -N RCAN_UNet_SL1
 ### Output files (comment out the next 2 lines to get the job name used instead)
 #PBS -j oe
-#PBS -o logs_qsub/ESDR_UNet_SL1.log
+#PBS -o logs_qsub/RCAN_UNet_SL1.log
 ### Only send mail when job is aborted or terminates abnormally
 #PBS -m e
 ### Number of nodes
@@ -33,4 +33,4 @@ conda activate tree-env
 # This is where the work is done
 # Make sure that this script is not bigger than 64kb ~ 150 lines, 
 # otherwise put in separate script and execute from here
-python run.py experiment=edsr_unet_sl1
+python run.py experiment=rcan_unet_sl1
