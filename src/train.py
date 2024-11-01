@@ -71,8 +71,13 @@ def train(config: DictConfig) -> Optional[float]:
     )
 
     # Train the model
-    log.info("Starting training!")
-    trainer.fit(model=model, datamodule=datamodule)
+    if config.get("ckpt_path"):
+        ckpt_path = config.get("ckpt_path")
+        log.info(f"Start of training from checkpoint {ckpt_path}!")
+        trainer.fit(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+    else :
+        log.info("Starting training!")
+        trainer.fit(model=model, datamodule=datamodule)
 
     # Evaluate model on test set, using the best model achieved during training
     if config.get("test_after_training") and not config.trainer.get("fast_dev_run"):
