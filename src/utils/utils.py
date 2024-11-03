@@ -164,10 +164,9 @@ def finish(
     logger,
 ) -> None:
     """Makes sure everything closed properly."""
-
     # without this sweeps with wandb logger might crash!
     for lg in logger:
-        if isinstance(lg, L.loggers.wandb.WandbLogger):
+        if isinstance(lg, L.pytorch.loggers.wandb.WandbLogger):
             import wandb
 
             wandb.finish()

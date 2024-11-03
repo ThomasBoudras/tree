@@ -26,4 +26,4 @@ work_dir: ${hydra:runtime.cwd}
 log_dir: ${work_dir}/logs/${run_name}/${run_version}
 data_dir: ./
 ckpt_path: null
-
+load_just_weights: False
