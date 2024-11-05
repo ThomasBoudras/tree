@@ -29,9 +29,25 @@ class Module(LightningModule):
         self.optimizer = optimizer
         self.scheduler = scheduler
     
+    def configure_optimizers(self):
+        optimizer = self.optimizer(params=self.parameters())
+        
+        if self.scheduler is not None:
+            scheduler = self.scheduler(optimizer=optimizer)
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "monitor": "val/loss",
+                    "interval": "epoch",
+                    "frequency": 1,
+                },
+            }
+        
+        return {"optimizer": optimizer}
+
     def forward(self, x: torch.Tensor):
         return self.network(x)
-
 
     def step(self, batch: Any, stage, metrics_function):
         inputs, targets , meta_data = batch
@@ -47,15 +63,7 @@ class Module(LightningModule):
                 )
         
         if metrics_function :
-            metrics = metrics_function(preds, targets, meta_data)
-            for metric_name, metric_value in metrics.items() :
-                self.log(
-                    name=os.path.join(stage, metric_name),
-                    value=metric_value, 
-                    on_step=False, 
-                    on_epoch=True, 
-                    prog_bar=False
-                    )
+            metrics_function.update(preds, targets, meta_data)
         
         return loss, preds, targets
     
@@ -74,19 +82,37 @@ class Module(LightningModule):
         loss, preds, targets = self.step(batch=batch, stage="val", metrics_function=self.test_metrics)
         return {"loss": loss, "preds": preds, "targets": targets}
 
-    def configure_optimizers(self):
-        optimizer = self.optimizer(params=self.parameters())
-        
-        if self.scheduler is not None:
-            scheduler = self.scheduler(optimizer=optimizer)
-            return {
-                "optimizer": optimizer,
-                "lr_scheduler": {
-                    "scheduler": scheduler,
-                    "monitor": "val/loss",
-                    "interval": "epoch",
-                    "frequency": 1,
-                },
-            }
-        
-        return {"optimizer": optimizer}
+
+    def final_step(self, stage, metrics_function):
+        if metrics_function :
+            metrics = metrics_function.compute()
+            for key, value in metrics.items():
+                if isinstance(value, dict):
+                    for metric_name, metric_value in value.items():
+                        self.log(
+                        f"{stage}/{key}/{metric_name}",
+                        metric_value,
+                        sync_dist=True,
+                        on_step=False,
+                        on_epoch=True,
+                    )
+
+                else :
+                    self.log(
+                        f"{stage}/{key}",
+                        value,
+                        sync_dist=True,
+                        on_step=False,
+                        on_epoch=True,
+                    )
+
+            metrics_function.reset()
+
+    def on_train_epoch_end(self):
+        self.final_step("train", self.train_metrics)
+    
+    def on_validation_epoch_end(self):
+        self.final_step("val", self.val_metrics)
+
+    def on_test_epoch_end(self):
+        self.final_step("val", self.val_metrics)
