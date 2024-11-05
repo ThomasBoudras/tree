@@ -9,7 +9,7 @@ replace_nan_by_zero_in_target: True
 min_year: 2021
 max_year: 2023
 target_resolution: 2.5
-zoom_factor: 4
+input_resolution: 10
 
 train_dataset:
   _target_: src.datamodules.datasets.sentinel_dataset.sentinelDataset
@@ -22,7 +22,7 @@ train_dataset:
   min_year: ${datamodule.dataset.min_year} 
   max_year: ${datamodule.dataset.max_year} 
   target_resolution: ${datamodule.dataset.target_resolution}
-  zoom_factor: ${datamodule.dataset.zoom_factor}  
+  input_resolution: ${datamodule.dataset.input_resolution}  
   split: train
 
 val_dataset:
@@ -36,7 +36,7 @@ val_dataset:
   min_year: ${datamodule.dataset.min_year} 
   max_year: ${datamodule.dataset.max_year} 
   target_resolution: ${datamodule.dataset.target_resolution}
-  zoom_factor: ${datamodule.dataset.zoom_factor}  
+  input_resolution: ${datamodule.dataset.input_resolution}  
   split: val
 
 test_dataset:
@@ -50,5 +50,5 @@ test_dataset:
   min_year: ${datamodule.dataset.min_year} 
   max_year: ${datamodule.dataset.max_year} 
   target_resolution: ${datamodule.dataset.target_resolution}
-  zoom_factor: ${datamodule.dataset.zoom_factor}  
+  input_resolution: ${datamodule.dataset.input_resolution}  
   split: test

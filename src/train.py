@@ -2,6 +2,7 @@ from typing import List, Optional
 
 import hydra
 from omegaconf import DictConfig
+import torch
 from lightning import (
     Callback,
     LightningDataModule,
@@ -71,8 +72,20 @@ def train(config: DictConfig) -> Optional[float]:
     )
 
     # Train the model
-    log.info("Starting training!")
-    trainer.fit(model=model, datamodule=datamodule)
+    if config.get("ckpt_path"):
+        ckpt_path = config.get("ckpt_path")
+        if config.load_just_weights :
+            log.info(f"Start of training from checkpoint {ckpt_path} using only the weights !")
+            checkpoint = torch.load(ckpt_path)
+            model.load_state_dict(checkpoint['state_dict'], strict=False)
+            ckpt_path = None
+        else :
+            log.info(f"Start of training from checkpoint {ckpt_path} !")
+    else :
+        log.info("Starting training from scratch!")
+        ckpt_path = None
+    trainer.fit(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+
 
     # Evaluate model on test set, using the best model achieved during training
     if config.get("test_after_training") and not config.trainer.get("fast_dev_run"):

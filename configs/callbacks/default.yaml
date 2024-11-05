@@ -1,11 +1,24 @@
-model_checkpoint:
+model_checkpoint_best:
     _target_: lightning.pytorch.callbacks.ModelCheckpoint
-    dirpath: ${log_dir}/checkpoints/
+    dirpath: ${log_dir}/best_checkpoints/
     filename: "epoch_{epoch:03d}"
     monitor: "val/loss" # name of the logged metric which determines when model is improving
-    mode: "max" # can be "max" or "min"
+    mode: "min" # can be "max" or "min"
     save_top_k: 1 # save k best models (determined by above metric)
     save_last: True # additionaly always save model from last epoch
+    verbose: False
+    auto_insert_metric_name: False
+    save_on_train_epoch_end: False
+
+model_checkpoint_periodic:
+    _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    dirpath: ${log_dir}/periodic_checkpoints/
+    filename: "save_epoch_{epoch:03d}"
+    monitor: "val/loss"
+    mode: "min"
+    every_n_epochs: 5 # Sauvegarde tous les 5 epochs
+    save_top_k: -1    # -1 pour sauvegarder à chaque fois, sans critère de performance
+    save_last: False
     verbose: False
     auto_insert_metric_name: False
     save_on_train_epoch_end: False
@@ -13,6 +26,6 @@ model_checkpoint:
 early_stopping:
     _target_: lightning.pytorch.callbacks.EarlyStopping
     monitor: "val/loss" # name of the logged metric which determines when model is improving
-    mode: "max" # can be "max" or "min"
+    mode: "min" # can be "max" or "min"
     patience: 10 # how many epochs of not improving until training stops
     min_delta: 0 # minimum change in the monitored metric needed to qualify as an improvement

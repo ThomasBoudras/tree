@@ -9,7 +9,6 @@ from pathlib import Path
 
 from src.utils.dataset_utils import BottomLeftCrop, SubsetSampler
 
-
 from src.utils import utils
 
 log = utils.get_logger(__name__)
@@ -98,8 +97,9 @@ class Datamodule(L.LightningDataModule):
         log.info(f"## values std : {self.input_std}  ##")
 
         # First apply croping to both input and target, then apply normalization to input only
-        self.transform_input = v2.Compose([v2.ToImage(), BottomLeftCrop(self.patch_size_input), v2.Normalize(mean=self.input_mean, std=self.input_std)])  # does not scale by 255
-        self.transform_target = v2.Compose([v2.ToImage(), BottomLeftCrop(self.patch_size_target)]) 
+
+        self.transform_input = v2.Compose([v2.ToTensor(), BottomLeftCrop(self.patch_size_input), v2.Normalize(mean=self.input_mean, std=self.input_std)])  # does not scale by 255
+        self.transform_target = v2.Compose([v2.ToTensor(), BottomLeftCrop(self.patch_size_target)]) 
 
         self.train_dataset.update_transforms(self.transform_input, self.transform_target)
         self.val_dataset.update_transforms(self.transform_input, self.transform_target)
