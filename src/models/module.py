@@ -3,6 +3,7 @@ from typing import Any
 import torch
 from lightning import LightningModule
 import os
+import numpy as np
 
 class Module(LightningModule):
     def __init__(
@@ -14,6 +15,7 @@ class Module(LightningModule):
         test_metrics,
         scheduler,
         optimizer,
+        predictions_save_dir=None,        
     ):
         super().__init__()
 
@@ -28,6 +30,7 @@ class Module(LightningModule):
         self.test_metrics = test_metrics
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.predictions_save_dir = predictions_save_dir
     
     def configure_optimizers(self):
         optimizer = self.optimizer(params=self.parameters())
@@ -116,3 +119,27 @@ class Module(LightningModule):
 
     def on_test_epoch_end(self):
         self.final_step("val", self.val_metrics)
+
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        # At predict time, there are (normally) only inputs, no targets
+
+        if (len(batch) == 2) and (
+            not isinstance(batch, torch.Tensor)
+        ):  # handle the case of a batch of size 2
+            res = self(batch[0])
+        else:
+            res = self(batch)
+        if self.predictions_save_dir is not None:
+            np.save(
+                os.path.join(self.predictions_save_dir, str(batch_idx) + ".npy"),
+                res.cpu().numpy().astype(np.float16),
+            )
+            if len(batch) == 2:  # save also labels
+                np.save(
+                    os.path.join(self.predictions_save_dir, str(batch_idx) + "_label.npy"),
+                    batch[1].cpu().numpy().astype(np.float16),
+                )
+            return None
+        else:
+            raise Exception("Please give a name for the prediction file ")

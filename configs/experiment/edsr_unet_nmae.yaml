@@ -7,8 +7,7 @@ seed: 12345
 
 run_name: SR_regre_end2end
 run_version: EDSR_UNet_nMAE_v2
-data_dir: /home/projects/ku_00196/people/thobou/data/
-ckpt_path : logs/SR_regre_end2end/EDSR_UNet_nMAE_v1/best_checkpoints/last.ckpt
+/home/projects/ku_00196/people/thobou/data/ckpt_path : logs/SR_regre_end2end/EDSR_UNet_nMAE_v1/best_checkpoints/last.ckpt
 load_just_weights: True
 
 
