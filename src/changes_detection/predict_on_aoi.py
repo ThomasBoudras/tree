@@ -16,6 +16,7 @@ from shapely.geometry import box
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 import glob
+from rasterio.transform import from_bounds
 
 from lightning import (
     LightningDataModule,
@@ -122,13 +123,11 @@ def predict_on_aoi(config: DictConfig) -> None:
 
         bounds = None
 
-    log.info(f"Instantiating dataset <{config.dataset._target_}>")
-    dataset= hydra.utils.instantiate(config.dataset)
 
     # Init lightning model
     log.info(f"Instantiating model <{config.model.instance._target_}>")
     model: LightningModule = hydra.utils.instantiate(config.model.instance)
-
+    model.predictions_save_dir = predictions_dir_tmp
 
     # Init lightning loggers
     logger = []
@@ -164,15 +163,10 @@ def predict_on_aoi(config: DictConfig) -> None:
     input_mean = np.load(os.path.join(normalization_constants_path, "mean.npy"))
     input_std = np.load(os.path.join(normalization_constants_path, "std.npy"))
 
-    # Scale by 255 for old models
-    if input_mean[0] < 1:
-        input_mean = input_mean * 255
-        input_std = input_std * 255
 
     transform = v2.Compose(
         [
             v2.ToTensor(),
-            v2.CenterCrop(config.patch_size),
             v2.Normalize(input_mean, input_std),
         ]
     )
@@ -251,7 +245,7 @@ def predict_on_aoi(config: DictConfig) -> None:
         trainer.predict(model, predict_dataloader)
 
         # Transform npy predictions to tif files
-        pixel_patch_bounds = grid_dataset.pixel_patch_bounds
+        patch_bounds = grid_dataset.patch_bounds
         # FIXME handle non int bounds for aoi
 
         predictions_files = [
@@ -274,36 +268,44 @@ def predict_on_aoi(config: DictConfig) -> None:
             for ix, pred in enumerate(batch_pred):
                 ix_grid = config.batch_size * batch_idx + ix
                 with rasterio.open(input_path) as src:
-                    (col_start, col_stop, row_start, row_stop) = pixel_patch_bounds[ix_grid]
-                    # Define the window from pixel_patch_bounds, adding crop
-                    window = rasterio.windows.Window(
-                        col_off=col_start + config.crop_size,
-                        row_off=row_start + config.crop_size,
-                        width=config.patch_size - 2 * config.crop_size,
-                        height=config.patch_size - 2 * config.crop_size,
-                    )
-                    # Save
+                    sample_bounds = patch_bounds[ix_grid]
                     output_path = os.path.join(predictions_dir_tmp_batch, str(ix_grid) + ".tif")
-                    cropped_meta = src.profile.copy()
-                    cropped_meta.update(
-                        {
-                            "driver": "GTiff",
-                            "height": window.height,
-                            "width": window.width,
-                            "transform": src.window_transform(window),
-                            # Save x10 in uint16 as float16 is not available in rasterio
-                            "dtype": rasterio.uint16,
-                            "count": 1,
-                            "nodata": None,
-                        }
-                    )
+                    
+                    pixel_crop_size = int(config.crop_size / config.target_resolution)
+
+                    sample_bounds = (
+                        sample_bounds[0] + config.crop_size,
+                        sample_bounds[1] + config.crop_size,
+                        sample_bounds[2] - config.crop_size,
+                        sample_bounds[3] - config.crop_size
+                        )
+                    
+
                     # clip negative values to 0
                     pred = np.clip(pred, a_min=0, a_max=None)
-                    pred = (10 * pred.squeeze().round(1)).astype(np.uint16)
-                    pred = pred[config.crop_size : -config.crop_size, config.crop_size : -config.crop_size]
-                    with rasterio.open(output_path, "w", **cropped_meta) as dst:
+                    pred = pred.squeeze().astype(np.uint16)
+                    pred = pred[pixel_crop_size : -pixel_crop_size, pixel_crop_size : -pixel_crop_size]
+
+                    height, width = pred.shape
+
+                    transform = from_bounds(sample_bounds[0], sample_bounds[1], sample_bounds[2], sample_bounds[3], width, height)
+
+
+                    with rasterio.open(
+                        output_path,
+                        "w",
+                        driver="GTiff",
+                        height=height,
+                        width=width,
+                        count=1,
+                        dtype=pred.dtype,
+                        crs="EPSG:2154",  # Remplacer par le CRS approprié si nécessaire
+                        transform=transform,
+                    ) as dst:
                         dst.write(pred, 1)
+                        
             # XXX to increase speed of the second concat, would be faster to save without compression at this stage
+            print(f"jpg saved in {os.path.join(predictions_dir_tmp, f'{batch_idx}_predictions.jp2')}")
             concat_tif_to_jp2(
                 predictions_dir_tmp_batch,
                 os.path.join(predictions_dir_tmp, f"{batch_idx}_predictions.jp2"),
@@ -356,9 +358,8 @@ def concat_tif_to_jp2(folder_path, output_path, pattern=".jp2"):
     # Define the options for the JPEG2000 driver
     options = [
         "QUALITY=100",  # Maximum quality for JPEG2000
-        "REVERSIBLE=YES",  # Enable lossless compression
     ]
-    gdal.Warp(output_path, vrt, format="JP2OpenJPEG", creationOptions=options)
+    gdal.Warp(output_path, vrt, format="JPEG", creationOptions=options)
 
     # Close the input datasets
     for dataset in input_datasets:
