@@ -22,6 +22,7 @@ test_after_training: True
 
 run_name: default_run
 run_version: main
+only_test : False
 work_dir: ${hydra:runtime.cwd}
 log_dir: ${work_dir}/logs/${run_name}/${run_version}
 data_dir: ./

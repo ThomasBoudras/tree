@@ -3,6 +3,7 @@ from typing import Any
 import torch
 from lightning import LightningModule
 import os
+import numpy as np
 
 class Module(LightningModule):
     def __init__(
@@ -14,6 +15,11 @@ class Module(LightningModule):
         test_metrics,
         scheduler,
         optimizer,
+<<<<<<< HEAD
+        log_on_first_validation,
+=======
+        predictions_save_dir=None,        
+>>>>>>> 78a79fca5c14bbb13f8dde2972701b8fbd149574
     ):
         super().__init__()
 
@@ -28,6 +34,11 @@ class Module(LightningModule):
         self.test_metrics = test_metrics
         self.optimizer = optimizer
         self.scheduler = scheduler
+<<<<<<< HEAD
+        self.log_on_first_validation = log_on_first_validation
+=======
+        self.predictions_save_dir = predictions_save_dir
+>>>>>>> 78a79fca5c14bbb13f8dde2972701b8fbd149574
     
     def configure_optimizers(self):
         optimizer = self.optimizer(params=self.parameters())
@@ -54,17 +65,23 @@ class Module(LightningModule):
         preds = self.forward(inputs)
         
         loss = self.loss(preds, targets)
+
+        if stage == "val" and not self.log_on_first_validation :
+            loss_log = loss * 10
+        else : 
+            loss_log = loss
+
         self.log(
                 name=os.path.join(stage, "loss"),
-                value=loss, 
+                value=loss_log, 
                 on_step=True,
                 on_epoch=True, 
                 prog_bar=False
                 )
-        
+    
         if metrics_function :
             metrics_function.update(preds, targets, meta_data)
-        
+
         return loss, preds, targets
     
 
@@ -105,8 +122,12 @@ class Module(LightningModule):
                         on_step=False,
                         on_epoch=True,
                     )
+            metrics_function.reset()   
 
-            metrics_function.reset()
+        if self.log_on_first_validation == False:
+            self.log_on_first_validation = True
+
+        
 
     def on_train_epoch_end(self):
         self.final_step("train", self.train_metrics)
@@ -116,3 +137,27 @@ class Module(LightningModule):
 
     def on_test_epoch_end(self):
         self.final_step("val", self.val_metrics)
+
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        # At predict time, there are (normally) only inputs, no targets
+
+        if (len(batch) == 2) and (
+            not isinstance(batch, torch.Tensor)
+        ):  # handle the case of a batch of size 2
+            res = self(batch[0])
+        else:
+            res = self(batch)
+        if self.predictions_save_dir is not None:
+            np.save(
+                os.path.join(self.predictions_save_dir, str(batch_idx) + ".npy"),
+                res.cpu().numpy().astype(np.float16),
+            )
+            if len(batch) == 2:  # save also labels
+                np.save(
+                    os.path.join(self.predictions_save_dir, str(batch_idx) + "_label.npy"),
+                    batch[1].cpu().numpy().astype(np.float16),
+                )
+            return None
+        else:
+            raise Exception("Please give a name for the prediction file ")

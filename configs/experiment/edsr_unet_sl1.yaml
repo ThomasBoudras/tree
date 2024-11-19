@@ -2,10 +2,10 @@
 seed: 12345
 
 run_name: SR_regre_end2end
-run_version: EDSR_UNet_SL1_v3
+run_version: EDSR_UNet_SL1_v4
 data_dir: /home/projects/ku_00196/people/thobou/data/
-ckpt_path : ${work_dir}/logs/SR_regre_end2end/EDSR_UNet_SL1_v2/best_checkpoints/last.ckpt
-load_just_weights: True
+ckpt_path : ${work_dir}/logs/SR_regre_end2end/EDSR_UNet_SL1_v4/best_checkpoints/epoch_009.ckpt
+load_just_weights: False
 
 datamodule:
     instance:

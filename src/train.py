@@ -72,30 +72,40 @@ def train(config: DictConfig) -> Optional[float]:
     )
 
     # Train the model
-    if config.get("ckpt_path"):
-        ckpt_path = config.get("ckpt_path")
-        if config.load_just_weights :
-            log.info(f"Start of training from checkpoint {ckpt_path} using only the weights !")
-            checkpoint = torch.load(ckpt_path)
-            model.load_state_dict(checkpoint['state_dict'], strict=False)
-            ckpt_path = None
+    if not config.only_test :
+        if config.get("ckpt_path"):
+            ckpt_path = config.get("ckpt_path")
+            if config.load_just_weights :
+                log.info(f"Start of training from checkpoint {ckpt_path} using only the weights !")
+                checkpoint = torch.load(ckpt_path)
+                model.load_state_dict(checkpoint['state_dict'], strict=False)
+                ckpt_path = None
+            else :
+                log.info(f"Start of training from checkpoint {ckpt_path} !")
         else :
-            log.info(f"Start of training from checkpoint {ckpt_path} !")
-    else :
-        log.info("Starting training from scratch!")
-        ckpt_path = None
-    trainer.fit(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
-
-
-    # Evaluate model on test set, using the best model achieved during training
-    if config.get("test_after_training") and not config.trainer.get("fast_dev_run"):
-        log.info("Starting testing!")
-        ckpt_path = trainer.checkpoint_callback.best_model_path
-        if ckpt_path == "":
-            log.warning("Best ckpt not found! Using current weights for testing...")
+            log.info("Starting training from scratch!")
             ckpt_path = None
-        log.info(f"Best ckpt path: {ckpt_path}")
-        trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+        
+        trainer.fit(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+
+
+        # Evaluate model on test set, using the best model achieved during training
+
+        if config.get("test_after_training") and not config.trainer.get("fast_dev_run"):
+            log.info("Starting testing!")
+            ckpt_path = trainer.checkpoint_callback.best_model_path
+            if ckpt_path == "":
+                log.warning("Best ckpt not found! Using current weights for testing...")
+                ckpt_path = None
+            log.info(f"Best ckpt path: {ckpt_path}")
+            trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+    else :
+        if config.get("ckpt_path"):
+            ckpt_path = config.ckpt_path
+            log.info(f"Starting testing with {ckpt_path}!")
+            trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+        else :
+            raise Exception("Give a checkpoint to test")
         
 
     # Make sure everything closed properly
