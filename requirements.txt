@@ -30,3 +30,4 @@ seaborn==0.13.2
 rasterio==1.4.1
 fiona==1.10.1
 pyarrow
+geopandas
