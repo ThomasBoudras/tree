@@ -189,6 +189,13 @@ def compute_tree_cover(tif_path, threshold, scaling_factor=None):
 
 
 def compute_change_metrics(mask1, mask2, difference_1, difference_2, resolution=1.5):
+    min_diff = -100
+    max_diff = 100
+
+    difference_1 = np.clip(difference_1, min_diff, max_diff)
+    difference_2 = np.clip(difference_2, min_diff, max_diff)
+
+
     tp = np.sum(np.logical_and(mask1, mask2))  # True positives
     # tn = np.sum(np.logical_and(~mask1, ~mask2))  # True negatives
     fp = np.sum(np.logical_and(mask2, np.logical_not(mask1)))  # False positives

@@ -19,14 +19,12 @@ year_1: 2022
 year_2: 2023
 
 labels_1:
-  # path: /scratch/_projets_/sierra/fajwel/openaccess/splits/20240422/2022/lidar.vrt
   path: ${root_dir}/data/lidar_1.tif
   unit: dm # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
   mask_on: false
 
 labels_2:
-  # path: /scratch/_projets_/sierra/fajwel/change/test/lidar_2023.tif
   path: ${root_dir}/data/lidar_2_m.tif
   unit: m # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
@@ -39,20 +37,22 @@ classification:
 
 predictions_1:
   path: /home/projects/ku_00196/people/thobou/tree/logs/SR_regre_end2end/${version}_predict_2022/predictions/SR_end_2_end/${version}_predict_2022/data/predictions.vrt
+  # path : ${root_dir}/data/open_canopy_predictions_1_m.tif
   unit: m # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
 
 predictions_2:
   path: /home/projects/ku_00196/people/thobou/tree/logs/SR_regre_end2end/${version}_predict_2023/predictions/SR_end_2_end/${version}_predict_2023/data/predictions.vrt
+  # path : ${root_dir}/data/open_canopy_predictions_2_m.tif
   unit: m # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
 
 inputs_1:
-  path: /home/projects/ku_00196/people/thobou/data/sentinel/composite/chantilly/2022/02-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
+  path: /home/projects/ku_00196/people/thobou/data/sentinel/composites/chantilly/2022/02-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
   crs: 2154
 
 inputs_2:
-  path: /home/projects/ku_00196/people/thobou/data/sentinel/composite/chantilly/2023/09-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
+  path: /home/projects/ku_00196/people/thobou/data/sentinel/composites/chantilly/2023/09-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
   crs: 2154
 
 save_dir: ${root_dir}/${version}/results

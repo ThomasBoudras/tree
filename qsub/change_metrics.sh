@@ -3,10 +3,10 @@
 ### Account information
 #PBS -W group_list=ku_00196 -A ku_00196
 ### Job name (comment out the next line to get the name of the script used as the job name)
-#PBS -N change_metrics_RN
+#PBS -N change_metrics_OC
 ### Output files (comment out the next 2 lines to get the job name used instead)
 #PBS -j oe
-#PBS -o logs_qsub/change_metrics_RN.log
+#PBS -o logs_qsub/change_metrics_OC.log
 ### Only send mail when job is aborted or terminates abnormally
 #PBS -m e
 ### Number of nodes
