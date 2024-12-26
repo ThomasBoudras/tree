@@ -7,7 +7,7 @@ def main(config: DictConfig):
 
     # Imports should be nested inside @hydra.main to optimize tab completion
     # Read more here: https://github.com/facebookresearch/hydra/issues/934
-    from src.changes_detection.predict_on_aoi import predict_on_aoi
+    from src.results.predict_on_aoi import predict_on_aoi
     from src.utils import utils
 
     # A couple of optional utilities:

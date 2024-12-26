@@ -1,0 +1,4 @@
+_target_: src.models.networks.regression.super_res_unet.SuperResUnet
+n_channels_in: 12
+layers: [3, 4, 6, 3]
+res_scale  : 0.1

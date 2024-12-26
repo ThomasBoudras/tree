@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+  - default
+  - ovveride /results/predict_on_aoi : default
+  - override /model/network/super_resolution: RCAN
+
+aoi_name: Chantilly
+project : "tree_predictions"
+run_name:  RCAN_UNet_SL1
+run_version : "2023"
+
+input_path :  ${data_dir}/sentinel/composites/chantilly/{$run_version}
+
+ckpt_path : /home/projects/ku_00196/people/thobou/tree/logs/tree/RCAN_UNet_SL1/RCAN_UNet_SL1_v3/best_checkpoints/epoch_010.ckpt
+
+# Chantilly changes predictions area 
+aoi_bounds: [654800, 6888800, 672600, 6904000]

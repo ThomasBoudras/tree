@@ -162,13 +162,15 @@ class LogImagePredictions(Callback):
 
             # get a validation batch from the validation dat loader
             samples = [dataset[i] for i in range(self.num_samples)]
-            inputs, targets, _ = zip(*samples)
+            inputs, targets, meta_data = zip(*samples)
             inputs = torch.stack(inputs).to(device=pl_module.device)
-            targets = torch.stack(targets).to(device=pl_module.device)            
+            targets = torch.stack(targets).to(device=pl_module.device)
+            meta_data =  {key: torch.stack([d[key] for d in meta_data], dim=0) for key in meta_data[0]}
 
-            preds = pl_module(inputs).to(device=pl_module.device)
 
-            input_images = inputs[:,[2,1,0],:,:]
+            preds = pl_module(inputs, meta_data).to(device=pl_module.device)
+
+
             target_images = []
             pred_images = []
             for i, pred in enumerate(preds) :
@@ -182,20 +184,39 @@ class LogImagePredictions(Callback):
                 target_images.append(target_image)
                 pred_images.append(pred_image)
             
-            input_images = make_grid(input_images)
+            curr_epoch = str(trainer.current_epoch)
+
+            if inputs.dim() == 4 :
+                input_images = inputs[:,[2,1,0],:,:]
+                input_images = make_grid(input_images)
+
+                experiment.log(
+                    {
+                        f"input_images/{stage}/epoch_{curr_epoch}": wandb.Image(input_images),
+                    }
+                )
+
+            if inputs.dim() == 5:
+
+                for t in range(inputs.shape[1]):
+                    input_images = inputs[:, t,[2,1,0],:,:]
+                    input_images = make_grid(input_images)
+                    experiment.log(
+                        {
+                            f"input_images/{stage}/epoch_{curr_epoch}/time_{t}": wandb.Image(input_images),
+                        }
+                    )
+
             target_images = make_grid(target_images)
             pred_images = make_grid(pred_images)
 
-            # log the images as wandb Image
-            curr_epoch = str(trainer.current_epoch)
             experiment.log(
                 {
-                    f"input_images/{stage}/epoch_{curr_epoch}": wandb.Image(input_images),
                     f"target_images/{stage}/epoch_{curr_epoch}": wandb.Image(target_images),
                     f"predicted_images/{stage}/epoch_{curr_epoch}": wandb.Image(pred_images),
-
                 }
-            )
+        )
+                
 
 
     def _normalize_pred_and_target_with_target(self, pred_tensor, target_tensor):

@@ -32,12 +32,12 @@ class masked_method_metrics(Metric):
 
         vegetation_mask = []
         for i, bounds in enumerate(bounds_batch):
-            year = year_batch[i]
+            year = year_batch[i].item()
             classification_path = os.path.join(self.classification_path, str(year), "lidar_classification.vrt")
             mask, _ = get_vegetation_and_forest_mask(
                 forest_mask_gdf=self.forest_mask_gdf,
                 classification_raster_path=classification_path,
-                bounds=bounds,
+                bounds=bounds.tolist(),
                 classes_to_keep=self.classes_to_keep,
                 resolution=1,
                 resampling_method="bilinear",
@@ -52,13 +52,13 @@ class masked_method_metrics(Metric):
         for i in range(1, len(self.bins)):
             bin_name = f"{self.bins[i-1]}-{self.bins[i]}"
             bin_mask = (bin_indices_target == i) & vegetation_mask
-            self.metric_calculator.update(pred.to(target.device), target.to(target.device), bin_mask, self.accumulated_metrics, bin_name)
+            self.metric_calculator.update(pred.to(target.device), target.to(target.device), mask=bin_mask, mask_MAE=None, accumulated_metrics = self.accumulated_metrics, bin_name=bin_name)
 
         full_mask = (bin_indices_target != 0) & (bin_indices_target != len(self.bins)) & vegetation_mask
-        self.metric_calculator.update(pred.to(target.device), target.to(target.device), full_mask, self.accumulated_metrics, "full")
+        full_mask_MAE = (bin_indices_target > 1) & (bin_indices_target != len(self.bins)) & vegetation_mask
+        self.metric_calculator.update(pred.to(target.device), target.to(target.device), mask=full_mask, mask_MAE=full_mask_MAE, accumulated_metrics = self.accumulated_metrics, bin_name = "full")
 
     def compute(self):
-
         final_results = {}
         for i in range(1, len(self.bins)):
             bin_name = f"{self.bins[i-1]}-{self.bins[i]}"
@@ -76,12 +76,12 @@ class masked_method_metrics(Metric):
 
 
 class classic_metrics :
-    def __init__(self, tree_cover_threshold):
+    def __init__(self, tree_cover_threshold, bins):
         self.tree_cover_threshold =  tree_cover_threshold
+        self.bins = bins
         self.metrics_accumulated = ["sum_error", "sum_absolute_error", "sum_relative_error", "sum_squarred_error", "intersection", "union", "nb_values"]
-   
         
-    def update(self, pred, target, mask, accumulated_metrics, bin_name) :
+    def update(self, pred, target, mask, accumulated_metrics, bin_name, mask_MAE=None) :
 
         if not bin_name in accumulated_metrics :
             accumulated_metrics[bin_name] = {}
@@ -98,8 +98,13 @@ class classic_metrics :
             
             absolute_error = torch.abs(error)
             accumulated_metrics[bin_name][f"sum_absolute_error"] += torch.sum(absolute_error)
-            accumulated_metrics[bin_name][f"sum_relative_error"] += torch.sum(absolute_error / (1 + torch.abs(masked_target)))
-        
+            
+            if bin_name != "full" :
+                accumulated_metrics[bin_name][f"sum_relative_error"] += torch.sum(absolute_error / (1 + torch.abs(masked_target)))
+            else :
+                error_mae = pred[mask_MAE] - target[mask_MAE]
+                accumulated_metrics[bin_name][f"sum_relative_error"] += torch.sum(torch.abs(error_mae) / (1 + torch.abs(target[mask_MAE])))
+
             threshold = torch.tensor(self.tree_cover_threshold).to(target.device)
             tree_cover_true = target >= threshold
             tree_cover_pred = pred >= threshold
@@ -108,11 +113,9 @@ class classic_metrics :
 
             accumulated_metrics[bin_name][f"nb_values"] += len(masked_pred) 
 
-
     def final_compute(self, accumulated_metrics, final_results, bin_name):
         
         final_results[bin_name] = {}
-        
         sum_absolute_error = accumulated_metrics[bin_name]["sum_absolute_error"]
         sum_error = accumulated_metrics[bin_name]["sum_error"]
         sum_squared_error = accumulated_metrics[bin_name]["sum_squarred_error"]
@@ -141,7 +144,10 @@ class classic_metrics :
 
 
             # nMAE - Normalized MAE 
-            final_results[bin_name][f"nMAE"] = sum_relative_error / nb_values
+            if bin_name != "full" :
+                final_results[bin_name][f"nMAE"] = sum_relative_error / nb_values
+            else :
+                final_results[bin_name][f"nMAE"] = sum_relative_error / (nb_values - accumulated_metrics[f"{self.bins[0]}-{self.bins[1]}"]["nb_values"])
 
             # TreeCov - Treecover IoU
             final_results[bin_name][f"TreeCov"] = intersection / (union + 1)

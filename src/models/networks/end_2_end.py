@@ -14,7 +14,7 @@ class end2EndNetwork(nn.Module):
         self.regression_model = regression_model
         
 
-    def forward(self, inputs):
-        SR_inputs = self.super_resolution_model(inputs)
-        preds = self.regression_model(SR_inputs)
+    def forward(self, inputs, meta_data):
+        SR_inputs = self.super_resolution_model(inputs, meta_data)
+        preds = self.regression_model(SR_inputs, meta_data)
         return preds

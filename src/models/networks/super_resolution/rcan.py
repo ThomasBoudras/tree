@@ -55,7 +55,7 @@ class RCAN(nn.Module):
         if pretrained_model_path :
             self.load_partial_weight(pretrained_model_path)
 
-    def forward(self, x):
+    def forward(self, x, meta_data):
         x = self.head(x)
 
         res = self.body(x)

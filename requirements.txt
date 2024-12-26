@@ -29,5 +29,8 @@ scikit-learn==1.5.2
 seaborn==0.13.2
 rasterio==1.4.1
 fiona==1.10.1
-pyarrow
-geopandas
+pyarrow==13.0.0
+geopandas==1.0.1
+numpy==1.25.2
+scipy==1.14.1
+scikit-image

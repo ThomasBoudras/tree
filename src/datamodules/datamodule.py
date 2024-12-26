@@ -43,6 +43,7 @@ class Datamodule(L.LightningDataModule):
         self.train_dataset = train_dataset
         self.val_dataset = val_dataset
         self.test_dataset = test_dataset
+        assert np.round(self.patch_size_input/self.patch_size_target,2) == np.round(self.train_dataset.target_resolution/self.train_dataset.input_resolution, 2) #to make sure we haven't made a mistake in the config
 
     def prepare_data(self):
         log.info(f"## Local save dir {self.trainer.log_dir} ##")
@@ -119,7 +120,9 @@ class Datamodule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=self.persistent_workers,
             sampler=sampler,
-            collate_fn=self.train_dataset.custom_collate_fn
+            collate_fn=self.train_dataset.custom_collate_fn,
+            timeout=600,
+
         )
 
     def val_dataloader(self, disable_shuffle  = False):
@@ -133,7 +136,8 @@ class Datamodule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=self.persistent_workers,
             sampler=sampler,
-            collate_fn=self.val_dataset.custom_collate_fn
+            collate_fn=self.val_dataset.custom_collate_fn,
+            timeout=600,
         )
 
     def test_dataloader(self, disable_shuffle  = False):
@@ -147,7 +151,8 @@ class Datamodule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=self.persistent_workers,
             sampler=sampler,
-            collate_fn=self.test_dataset.custom_collate_fn
+            collate_fn=self.test_dataset.custom_collate_fn,
+            timeout=600,
         )
     
     def _get_a_sampler(self, dataset, max_n_inputs, disable_shuffle) :

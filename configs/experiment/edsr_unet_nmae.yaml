@@ -4,11 +4,11 @@ defaults:
     - override /model/loss: nMAE_loss
 
 seed: 12345
-
-run_name: SR_regre_end2end
-run_version: EDSR_UNet_nMAE_v3
+project : "tree"
+run_name: EDSR_UNet_nMAE
+run_version: v3_${run_name}
 data_dir: /home/projects/ku_00196/people/thobou/data/
-ckpt_path : logs/SR_regre_end2end/EDSR_UNet_nMAE_v3/best_checkpoints/epoch_005.ckpt
+ckpt_path : null
 load_just_weights: False
 
 
@@ -23,9 +23,9 @@ datamodule:
         patch_size_target: 256
         batch_size: 16
     dataset:
-        input_path: ${data_dir}/sentinel/composites
-        target_path: ${data_dir}/lidar/
-        geometries_path : ${data_dir}/utils/geometries.geojson
+        input_path: ${data_dir}/sentinel/composites/one_month_image/
+        target_path: ${data_dir}/lidar/france
+        geometries_path : ${data_dir}/utils/geometries_cleaned.geojson
         min_year: 2021
         max_year: 2023
 
@@ -36,7 +36,7 @@ model:
             pretrained_model_path:  ${data_dir}/utils/EDSR_x4.pt
     metrics:
         forest_mask_path: ${data_dir}/utils/forest_mask.parquet
-        classification_path: ${data_dir}/lidar/
+        classification_path: ${data_dir}/lidar/france
     optimizer:
         lr : 1e-4
     scheduler :
@@ -48,5 +48,8 @@ trainer:
     log_every_n_steps: 50
 
 
-wandb:
-    tags: ["super_resolution", "canopy", "EDSR", "U-Net"]
+logger:
+    wandb:
+        tags: ["super_resolution", "canopy", "EDSR", "U-Net"]
+        job_type: "train"
+        group: "super_resolution"

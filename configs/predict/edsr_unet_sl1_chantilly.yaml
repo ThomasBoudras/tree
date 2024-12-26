@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - default
+
+aoi_name: Chantilly
+project : "tree_predictions"
+run_name:  EDSR_UNet_SL1
+run_version : "2023"
+
+input_path :  ${data_dir}/sentinel/composites/chantilly/{$run_version}
+
+ckpt_path : /home/projects/ku_00196/people/thobou/tree/logs/test/EDSR_UNet_SL1/EDSR_UNet_SL1/EDSR_UNet_SL1_v4/periodic_checkpoints/save_epoch_009.ckpt
+
+# Chantilly changes predictions area 
+aoi_bounds: [654800, 6888800, 672600, 6904000]
