@@ -10,6 +10,8 @@ defaults:
     - logger: wandb.yaml # set logger here or use command line (e.g. `python run.py logger=wandb`)
 
     - experiment: null
+    - predict: null
+    - test : null
     - hparams_search: null
 
     - hydra: default.yaml
@@ -20,11 +22,12 @@ print_config: True
 ignore_warnings: True
 test_after_training: True
 
+project : "tree"
 run_name: default_run
-run_version: main
+run_version: ${run_name}_main
 only_test : False
 work_dir: ${hydra:runtime.cwd}
-log_dir: ${work_dir}/logs/${run_name}/${run_version}
+log_dir: ${work_dir}/logs/${project}/${run_name}/${run_version}
 data_dir: ./
 ckpt_path: null
 load_just_weights: False

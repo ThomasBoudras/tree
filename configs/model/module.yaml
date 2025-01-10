@@ -26,4 +26,3 @@ instance:
   test_metrics: ${model.metrics.test_metrics}
   optimizer: ${model.optimizer}
   scheduler: ${model.scheduler}
-  log_on_first_validation : ${load_just_weights}

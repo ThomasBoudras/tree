@@ -1,296 +1,466 @@
 CONFIG
 ├── trainer
-│   └── _target_: lightning.pytorch.trainer.Trainer              
-│       gpus: 0                                          
-│       min_epochs: 1                                    
-│       max_epochs: 100                                  
-│       weights_summary: null                            
-│       progress_bar_refresh_rate: 10                    
-│       resume_from_checkpoint: null                     
-│                                                        
+│   └── _target_: src.trainer.default.defaultTrainer                                      
+│       default_root_dir: /work/work/tree                                                 
+│       min_epochs: 1                                                                     
+│       max_epochs: 100                                                                   
+│       accelerator: gpu                                                                  
+│       num_nodes: 1                                                                      
+│       strategy: auto                                                                    
+│       log_every_n_steps: 50                                                             
+│       check_val_every_n_epoch: 1                                                        
+│       profiler: null                                                                    
+│                                                                                         
 ├── model
-│   └── network:                                         
-│         regression:                                    
-│           _target_: src.models.networks.regression.unet
-│           n_channels_in: 12                            
-│         super_resolution:                              
-│           _target_: src.models.networks.super_resolutio
-│           n_resblocks: 32                              
-│           scale: 4                                     
-│           n_feats: 256                                 
-│           n_channel: 12                                
-│           res_scale: 0.1                               
-│           pretrained_model_path: /home/thom_bdrs/travai
-│         instance:                                      
-│           _target_: src.models.networks.end_2_end.end2E
-│           regression_model:                            
-│             _target_: src.models.networks.regression.un
-│             n_channels_in: 12                          
-│           super_resolution_model:                      
-│             _target_: src.models.networks.super_resolut
-│             n_resblocks: 32                            
-│             scale: 4                                   
-│             n_feats: 256                               
-│             n_channel: 12                              
-│             res_scale: 0.1                             
-│             pretrained_model_path: /home/thom_bdrs/trav
-│       loss:                                            
-│         _target_: torch.nn.SmoothL1Loss                
-│         reduction: mean                                
-│         beta: 1.0                                      
-│       metrics:                                         
-│         tree_cover_threshold: 2                        
-│         forest_mask_path: /home/thom_bdrs/travail/copen
-│         classification_path: /home/thom_bdrs/travail/co
-│         classes_to_keep:                               
-│         - 5                                            
-│         train_metrics:                                 
-│           _target_: src.models.metrics.OpenCanopyMetric
-│           tree_cover_threshold: 2                      
-│           forest_mask_path: /home/thom_bdrs/travail/cop
-│           classification_path: /home/thom_bdrs/travail/
-│           classes_to_keep:                             
-│           - 5                                          
-│         val_metrics:                                   
-│           _target_: src.models.metrics.metrics.OpenCano
-│           tree_cover_threshold: 2                      
-│           forest_mask_path: /home/thom_bdrs/travail/cop
-│           classification_path: /home/thom_bdrs/travail/
-│           classes_to_keep:                             
-│           - 5                                          
-│         test_metrics:                                  
-│           _target_: src.models.metrics.metrics.OpenCano
-│           tree_cover_threshold: 2                      
-│           forest_mask_path: /home/thom_bdrs/travail/cop
-│           classification_path: /home/thom_bdrs/travail/
-│           classes_to_keep:                             
-│           - 5                                          
-│       optimizer:                                       
-│         _target_: torch.optim.Adam                     
-│         _partial_: true                                
-│         lr: 0.001                                      
-│         weight_decay: 0.0                              
-│       scheduler:                                       
-│         _target_: torch.optim.lr_scheduler.ReduceLROnPl
-│         _partial_: true                                
-│         mode: min                                      
-│         factor: 0.1                                    
-│         patience: 10                                   
-│       instance:                                        
-│         _target_: src.models.module.Module             
-│         optimizer:                                     
-│           _target_: torch.optim.Adam                   
-│           _partial_: true                              
-│           lr: 0.001                                    
-│           weight_decay: 0.0                            
-│         scheduler:                                     
-│           _target_: torch.optim.lr_scheduler.ReduceLROn
-│           _partial_: true                              
-│           mode: min                                    
-│           factor: 0.1                                  
-│           patience: 10                                 
-│         network:                                       
-│           regression:                                  
-│             _target_: src.models.networks.regression.un
-│             n_channels_in: 12                          
-│           super_resolution:                            
-│             _target_: src.models.networks.super_resolut
-│             n_resblocks: 32                            
-│             scale: 4                                   
-│             n_feats: 256                               
-│             n_channel: 12                              
-│             res_scale: 0.1                             
-│             pretrained_model_path: /home/thom_bdrs/trav
-│           instance:                                    
-│             _target_: src.models.networks.end_2_end.end
-│             regression_model:                          
-│               _target_: src.models.networks.regression.
-│               n_channels_in: 12                        
-│             super_resolution_model:                    
-│               _target_: src.models.networks.super_resol
-│               n_resblocks: 32                          
-│               scale: 4                                 
-│               n_feats: 256                             
-│               n_channel: 12                            
-│               res_scale: 0.1                           
-│               pretrained_model_path: /home/thom_bdrs/tr
-│         loss:                                          
-│           _target_: torch.nn.SmoothL1Loss              
-│           reduction: mean                              
-│           beta: 1.0                                    
-│         train_metrics:                                 
-│           _target_: src.models.metrics.OpenCanopyMetric
-│           tree_cover_threshold: 2                      
-│           forest_mask_path: /home/thom_bdrs/travail/cop
-│           classification_path: /home/thom_bdrs/travail/
-│           classes_to_keep:                             
-│           - 5                                          
-│         val_metrics:                                   
-│           _target_: src.models.metrics.metrics.OpenCano
-│           tree_cover_threshold: 2                      
-│           forest_mask_path: /home/thom_bdrs/travail/cop
-│           classification_path: /home/thom_bdrs/travail/
-│           classes_to_keep:                             
-│           - 5                                          
-│         test_metrics:                                  
-│           _target_: src.models.metrics.metrics.OpenCano
-│           tree_cover_threshold: 2                      
-│           forest_mask_path: /home/thom_bdrs/travail/cop
-│           classification_path: /home/thom_bdrs/travail/
-│           classes_to_keep:                             
-│           - 5                                          
-│                                                        
+│   └── network:                                                                          
+│         regression:                                                                     
+│           _target_: src.models.networks.regression.utae.UTAE                            
+│           input_dim: 12                                                                 
+│           encoder_widths:                                                               
+│           - 64                                                                          
+│           - 64                                                                          
+│           - 64                                                                          
+│           - 128                                                                         
+│           decoder_widths:                                                               
+│           - 32                                                                          
+│           - 32                                                                          
+│           - 64                                                                          
+│           - 128                                                                         
+│           out_conv:                                                                     
+│           - 32                                                                          
+│           - 1                                                                           
+│           str_conv_k: 4                                                                 
+│           str_conv_s: 2                                                                 
+│           str_conv_p: 1                                                                 
+│           agg_mode: att_group                                                           
+│           encoder_norm: group                                                           
+│           n_head: 16                                                                    
+│           d_model: 256                                                                  
+│           d_k: 4                                                                        
+│         instance:                                                                       
+│           _target_: src.models.networks.classic_network.classicNetwork                  
+│           regression_model:                                                             
+│             _target_: src.models.networks.regression.utae.UTAE                          
+│             input_dim: 12                                                               
+│             encoder_widths:                                                             
+│             - 64                                                                        
+│             - 64                                                                        
+│             - 64                                                                        
+│             - 128                                                                       
+│             decoder_widths:                                                             
+│             - 32                                                                        
+│             - 32                                                                        
+│             - 64                                                                        
+│             - 128                                                                       
+│             out_conv:                                                                   
+│             - 32                                                                        
+│             - 1                                                                         
+│             str_conv_k: 4                                                               
+│             str_conv_s: 2                                                               
+│             str_conv_p: 1                                                               
+│             agg_mode: att_group                                                         
+│             encoder_norm: group                                                         
+│             n_head: 16                                                                  
+│             d_model: 256                                                                
+│             d_k: 4                                                                      
+│       loss:                                                                             
+│         _target_: torch.nn.SmoothL1Loss                                                 
+│         reduction: mean                                                                 
+│         beta: 1.0                                                                       
+│       metrics:                                                                          
+│         metric_calculator:                                                              
+│           _target_: src.models.metrics.metrics.classic_metrics                          
+│           tree_cover_threshold: 2                                                       
+│           bins:                                                                         
+│           - 0                                                                           
+│           - 2                                                                           
+│           - 5                                                                           
+│           - 10                                                                          
+│           - 15                                                                          
+│           - 20                                                                          
+│           - 30                                                                          
+│           - 60                                                                          
+│         forest_mask_path: /work/data/utils/forest_mask.parquet                          
+│         classification_path: /work/data/lidar/france                                    
+│         classes_to_keep:                                                                
+│         - 5                                                                             
+│         bins:                                                                           
+│         - 0                                                                             
+│         - 2                                                                             
+│         - 5                                                                             
+│         - 10                                                                            
+│         - 15                                                                            
+│         - 20                                                                            
+│         - 30                                                                            
+│         - 60                                                                            
+│         train_metrics: null                                                             
+│         val_metrics:                                                                    
+│           _target_: src.models.metrics.metrics.masked_method_metrics                    
+│           metric_calculator:                                                            
+│             _target_: src.models.metrics.metrics.classic_metrics                        
+│             tree_cover_threshold: 2                                                     
+│             bins:                                                                       
+│             - 0                                                                         
+│             - 2                                                                         
+│             - 5                                                                         
+│             - 10                                                                        
+│             - 15                                                                        
+│             - 20                                                                        
+│             - 30                                                                        
+│             - 60                                                                        
+│           forest_mask_path: /work/data/utils/forest_mask.parquet                        
+│           classification_path: /work/data/lidar/france                                  
+│           classes_to_keep:                                                              
+│           - 5                                                                           
+│           target_patch_size: 256                                                        
+│           bins:                                                                         
+│           - 0                                                                           
+│           - 2                                                                           
+│           - 5                                                                           
+│           - 10                                                                          
+│           - 15                                                                          
+│           - 20                                                                          
+│           - 30                                                                          
+│           - 60                                                                          
+│         test_metrics:                                                                   
+│           _target_: src.models.metrics.metrics.masked_method_metrics                    
+│           metric_calculator:                                                            
+│             _target_: src.models.metrics.metrics.classic_metrics                        
+│             tree_cover_threshold: 2                                                     
+│             bins:                                                                       
+│             - 0                                                                         
+│             - 2                                                                         
+│             - 5                                                                         
+│             - 10                                                                        
+│             - 15                                                                        
+│             - 20                                                                        
+│             - 30                                                                        
+│             - 60                                                                        
+│           forest_mask_path: /work/data/utils/forest_mask.parquet                        
+│           classification_path: /work/data/lidar/france                                  
+│           classes_to_keep:                                                              
+│           - 5                                                                           
+│           target_patch_size: 256                                                        
+│           bins:                                                                         
+│           - 0                                                                           
+│           - 2                                                                           
+│           - 5                                                                           
+│           - 10                                                                          
+│           - 15                                                                          
+│           - 20                                                                          
+│           - 30                                                                          
+│           - 60                                                                          
+│       optimizer:                                                                        
+│         _target_: torch.optim.Adam                                                      
+│         _partial_: true                                                                 
+│         lr: 0.0001                                                                      
+│         weight_decay: 0.0                                                               
+│       scheduler:                                                                        
+│         _target_: torch.optim.lr_scheduler.ReduceLROnPlateau                            
+│         _partial_: true                                                                 
+│         mode: min                                                                       
+│         factor: 0.1                                                                     
+│         patience: 3                                                                     
+│       instance:                                                                         
+│         _target_: src.models.module.Module                                              
+│         network:                                                                        
+│           regression:                                                                   
+│             _target_: src.models.networks.regression.utae.UTAE                          
+│             input_dim: 12                                                               
+│             encoder_widths:                                                             
+│             - 64                                                                        
+│             - 64                                                                        
+│             - 64                                                                        
+│             - 128                                                                       
+│             decoder_widths:                                                             
+│             - 32                                                                        
+│             - 32                                                                        
+│             - 64                                                                        
+│             - 128                                                                       
+│             out_conv:                                                                   
+│             - 32                                                                        
+│             - 1                                                                         
+│             str_conv_k: 4                                                               
+│             str_conv_s: 2                                                               
+│             str_conv_p: 1                                                               
+│             agg_mode: att_group                                                         
+│             encoder_norm: group                                                         
+│             n_head: 16                                                                  
+│             d_model: 256                                                                
+│             d_k: 4                                                                      
+│           instance:                                                                     
+│             _target_: src.models.networks.classic_network.classicNetwork                
+│             regression_model:                                                           
+│               _target_: src.models.networks.regression.utae.UTAE                        
+│               input_dim: 12                                                             
+│               encoder_widths:                                                           
+│               - 64                                                                      
+│               - 64                                                                      
+│               - 64                                                                      
+│               - 128                                                                     
+│               decoder_widths:                                                           
+│               - 32                                                                      
+│               - 32                                                                      
+│               - 64                                                                      
+│               - 128                                                                     
+│               out_conv:                                                                 
+│               - 32                                                                      
+│               - 1                                                                       
+│               str_conv_k: 4                                                             
+│               str_conv_s: 2                                                             
+│               str_conv_p: 1                                                             
+│               agg_mode: att_group                                                       
+│               encoder_norm: group                                                       
+│               n_head: 16                                                                
+│               d_model: 256                                                              
+│               d_k: 4                                                                    
+│         loss:                                                                           
+│           _target_: torch.nn.SmoothL1Loss                                               
+│           reduction: mean                                                               
+│           beta: 1.0                                                                     
+│         train_metrics: null                                                             
+│         val_metrics:                                                                    
+│           _target_: src.models.metrics.metrics.masked_method_metrics                    
+│           metric_calculator:                                                            
+│             _target_: src.models.metrics.metrics.classic_metrics                        
+│             tree_cover_threshold: 2                                                     
+│             bins:                                                                       
+│             - 0                                                                         
+│             - 2                                                                         
+│             - 5                                                                         
+│             - 10                                                                        
+│             - 15                                                                        
+│             - 20                                                                        
+│             - 30                                                                        
+│             - 60                                                                        
+│           forest_mask_path: /work/data/utils/forest_mask.parquet                        
+│           classification_path: /work/data/lidar/france                                  
+│           classes_to_keep:                                                              
+│           - 5                                                                           
+│           target_patch_size: 256                                                        
+│           bins:                                                                         
+│           - 0                                                                           
+│           - 2                                                                           
+│           - 5                                                                           
+│           - 10                                                                          
+│           - 15                                                                          
+│           - 20                                                                          
+│           - 30                                                                          
+│           - 60                                                                          
+│         test_metrics:                                                                   
+│           _target_: src.models.metrics.metrics.masked_method_metrics                    
+│           metric_calculator:                                                            
+│             _target_: src.models.metrics.metrics.classic_metrics                        
+│             tree_cover_threshold: 2                                                     
+│             bins:                                                                       
+│             - 0                                                                         
+│             - 2                                                                         
+│             - 5                                                                         
+│             - 10                                                                        
+│             - 15                                                                        
+│             - 20                                                                        
+│             - 30                                                                        
+│             - 60                                                                        
+│           forest_mask_path: /work/data/utils/forest_mask.parquet                        
+│           classification_path: /work/data/lidar/france                                  
+│           classes_to_keep:                                                              
+│           - 5                                                                           
+│           target_patch_size: 256                                                        
+│           bins:                                                                         
+│           - 0                                                                           
+│           - 2                                                                           
+│           - 5                                                                           
+│           - 10                                                                          
+│           - 15                                                                          
+│           - 20                                                                          
+│           - 30                                                                          
+│           - 60                                                                          
+│         optimizer:                                                                      
+│           _target_: torch.optim.Adam                                                    
+│           _partial_: true                                                               
+│           lr: 0.0001                                                                    
+│           weight_decay: 0.0                                                             
+│         scheduler:                                                                      
+│           _target_: torch.optim.lr_scheduler.ReduceLROnPlateau                          
+│           _partial_: true                                                               
+│           mode: min                                                                     
+│           factor: 0.1                                                                   
+│           patience: 3                                                                   
+│                                                                                         
 ├── datamodule
-│   └── dataset:                                         
-│         input_sources:                                 
-│         - s2                                           
-│         - s1                                           
-│         input_path: /home/thom_bdrs/travail/copenhague/
-│         target_path: /home/thom_bdrs/travail/copenhague
-│         target_unit: dm                                
-│         geometries_path: /home/thom_bdrs/travail/copenh
-│         replace_nan_by_zero_in_target: true            
-│         min_year: 2021                                 
-│         max_year: 2023                                 
-│         target_resolution: 2.5                         
-│         zoom_factor: 4                                 
-│         train_dataset:                                 
-│           _target_: src.datamodules.datasets.sentinel_d
-│           input_sources:                               
-│           - s2                                         
-│           - s1                                         
-│           input_path: /home/thom_bdrs/travail/copenhagu
-│           target_path: /home/thom_bdrs/travail/copenhag
-│           target_unit: dm                              
-│           geometries_path: /home/thom_bdrs/travail/cope
-│           replace_nan_by_zero_in_target: true          
-│           min_year: 2021                               
-│           max_year: 2023                               
-│           target_resolution: 2.5                       
-│           zoom_factor: 4                               
-│           split: train                                 
-│         val_dataset:                                   
-│           _target_: src.datamodules.datasets.sentinel_d
-│           input_sources:                               
-│           - s2                                         
-│           - s1                                         
-│           input_path: /home/thom_bdrs/travail/copenhagu
-│           target_path: /home/thom_bdrs/travail/copenhag
-│           target_unit: dm                              
-│           geometries_path: /home/thom_bdrs/travail/cope
-│           replace_nan_by_zero_in_target: true          
-│           min_year: 2021                               
-│           max_year: 2023                               
-│           target_resolution: 2.5                       
-│           zoom_factor: 4                               
-│           split: val                                   
-│         test_dataset:                                  
-│           _target_: src.datamodules.datasets.sentinel_d
-│           input_sources:                               
-│           - s2                                         
-│           - s1                                         
-│           input_path: /home/thom_bdrs/travail/copenhagu
-│           target_path: /home/thom_bdrs/travail/copenhag
-│           target_unit: dm                              
-│           geometries_path: /home/thom_bdrs/travail/cope
-│           replace_nan_by_zero_in_target: true          
-│           min_year: 2021                               
-│           max_year: 2023                               
-│           target_resolution: 2.5                       
-│           zoom_factor: 4                               
-│           split: test                                  
-│       instance:                                        
-│         _target_: src.datamodules.datamodule.Datamodule
-│         patch_size_input: 128                          
-│         patch_size_target: 512                         
-│         batch_size: 16                                 
-│         num_workers: 1                                 
-│         persistent_workers: true                       
-│         max_n_inputs_for_moments_computation: 300      
-│         max_n_inputs_per_epoch: 100                    
-│         train_dataset:                                 
-│           _target_: src.datamodules.datasets.sentinel_d
-│           input_sources:                               
-│           - s2                                         
-│           - s1                                         
-│           input_path: /home/thom_bdrs/travail/copenhagu
-│           target_path: /home/thom_bdrs/travail/copenhag
-│           target_unit: dm                              
-│           geometries_path: /home/thom_bdrs/travail/cope
-│           replace_nan_by_zero_in_target: true          
-│           min_year: 2021                               
-│           max_year: 2023                               
-│           target_resolution: 2.5                       
-│           zoom_factor: 4                               
-│           split: train                                 
-│         val_dataset:                                   
-│           _target_: src.datamodules.datasets.sentinel_d
-│           input_sources:                               
-│           - s2                                         
-│           - s1                                         
-│           input_path: /home/thom_bdrs/travail/copenhagu
-│           target_path: /home/thom_bdrs/travail/copenhag
-│           target_unit: dm                              
-│           geometries_path: /home/thom_bdrs/travail/cope
-│           replace_nan_by_zero_in_target: true          
-│           min_year: 2021                               
-│           max_year: 2023                               
-│           target_resolution: 2.5                       
-│           zoom_factor: 4                               
-│           split: val                                   
-│         test_dataset:                                  
-│           _target_: src.datamodules.datasets.sentinel_d
-│           input_sources:                               
-│           - s2                                         
-│           - s1                                         
-│           input_path: /home/thom_bdrs/travail/copenhagu
-│           target_path: /home/thom_bdrs/travail/copenhag
-│           target_unit: dm                              
-│           geometries_path: /home/thom_bdrs/travail/cope
-│           replace_nan_by_zero_in_target: true          
-│           min_year: 2021                               
-│           max_year: 2023                               
-│           target_resolution: 2.5                       
-│           zoom_factor: 4                               
-│           split: test                                  
-│         normalization_save_path: /home/thom_bdrs/travai
-│         normalization_constants: null                  
-│                                                        
+│   └── dataset:                                                                          
+│         input_path: /work/data/sentinel/timeseries/one_month_image                      
+│         target_path: /work/data/lidar/france                                            
+│         target_unit: dm                                                                 
+│         geometries_path: /work/data/utils/geometries_120_days_cleaned.geojson           
+│         replace_nan_by_zero_in_target: true                                             
+│         min_year: 2021                                                                  
+│         max_year: 2023                                                                  
+│         target_resolution: 2.5                                                          
+│         input_resolution: 2.5                                                           
+│         nb_timeseries_image: 16                                                         
+│         duplication_level_noise: 80                                                     
+│         train_dataset:                                                                  
+│           _target_: src.datamodules.datasets.timeseries_sentinel_dataset.sentinelDataset
+│           input_path: /work/data/sentinel/timeseries/one_month_image                    
+│           target_path: /work/data/lidar/france                                          
+│           target_unit: dm                                                               
+│           geometries_path: /work/data/utils/geometries_120_days_cleaned.geojson         
+│           replace_nan_by_zero_in_target: true                                           
+│           min_year: 2021                                                                
+│           max_year: 2023                                                                
+│           target_resolution: 2.5                                                        
+│           input_resolution: 2.5                                                         
+│           nb_timeseries_image: 16                                                       
+│           duplication_level_noise: 80                                                   
+│           patch_size_input: 256                                                         
+│           split: train                                                                  
+│         val_dataset:                                                                    
+│           _target_: src.datamodules.datasets.timeseries_sentinel_dataset.sentinelDataset
+│           input_path: /work/data/sentinel/timeseries/one_month_image                    
+│           target_path: /work/data/lidar/france                                          
+│           target_unit: dm                                                               
+│           geometries_path: /work/data/utils/geometries_120_days_cleaned.geojson         
+│           replace_nan_by_zero_in_target: true                                           
+│           min_year: 2021                                                                
+│           max_year: 2023                                                                
+│           target_resolution: 2.5                                                        
+│           input_resolution: 2.5                                                         
+│           nb_timeseries_image: 16                                                       
+│           duplication_level_noise: 80                                                   
+│           patch_size_input: 256                                                         
+│           split: val                                                                    
+│         test_dataset:                                                                   
+│           _target_: src.datamodules.datasets.timeseries_sentinel_dataset.sentinelDataset
+│           input_path: /work/data/sentinel/timeseries/one_month_image                    
+│           target_path: /work/data/lidar/france                                          
+│           target_unit: dm                                                               
+│           geometries_path: /work/data/utils/geometries_120_days_cleaned.geojson         
+│           replace_nan_by_zero_in_target: true                                           
+│           min_year: 2021                                                                
+│           max_year: 2023                                                                
+│           target_resolution: 2.5                                                        
+│           input_resolution: 2.5                                                         
+│           nb_timeseries_image: 16                                                       
+│           duplication_level_noise: 80                                                   
+│           patch_size_input: 256                                                         
+│           split: test                                                                   
+│         max_bounds_size: 330                                                            
+│       instance:                                                                         
+│         _target_: src.datamodules.datamodule.Datamodule                                 
+│         patch_size_input: 256                                                           
+│         patch_size_target: 256                                                          
+│         batch_size: 8                                                                   
+│         num_workers: 8                                                                  
+│         persistent_workers: true                                                        
+│         max_n_inputs_for_moments_computation: 1000                                      
+│         max_n_inputs_per_epoch: null                                                    
+│         train_dataset:                                                                  
+│           _target_: src.datamodules.datasets.timeseries_sentinel_dataset.sentinelDataset
+│           input_path: /work/data/sentinel/timeseries/one_month_image                    
+│           target_path: /work/data/lidar/france                                          
+│           target_unit: dm                                                               
+│           geometries_path: /work/data/utils/geometries_120_days_cleaned.geojson         
+│           replace_nan_by_zero_in_target: true                                           
+│           min_year: 2021                                                                
+│           max_year: 2023                                                                
+│           target_resolution: 2.5                                                        
+│           input_resolution: 2.5                                                         
+│           nb_timeseries_image: 16                                                       
+│           duplication_level_noise: 80                                                   
+│           patch_size_input: 256                                                         
+│           split: train                                                                  
+│         val_dataset:                                                                    
+│           _target_: src.datamodules.datasets.timeseries_sentinel_dataset.sentinelDataset
+│           input_path: /work/data/sentinel/timeseries/one_month_image                    
+│           target_path: /work/data/lidar/france                                          
+│           target_unit: dm                                                               
+│           geometries_path: /work/data/utils/geometries_120_days_cleaned.geojson         
+│           replace_nan_by_zero_in_target: true                                           
+│           min_year: 2021                                                                
+│           max_year: 2023                                                                
+│           target_resolution: 2.5                                                        
+│           input_resolution: 2.5                                                         
+│           nb_timeseries_image: 16                                                       
+│           duplication_level_noise: 80                                                   
+│           patch_size_input: 256                                                         
+│           split: val                                                                    
+│         test_dataset:                                                                   
+│           _target_: src.datamodules.datasets.timeseries_sentinel_dataset.sentinelDataset
+│           input_path: /work/data/sentinel/timeseries/one_month_image                    
+│           target_path: /work/data/lidar/france                                          
+│           target_unit: dm                                                               
+│           geometries_path: /work/data/utils/geometries_120_days_cleaned.geojson         
+│           replace_nan_by_zero_in_target: true                                           
+│           min_year: 2021                                                                
+│           max_year: 2023                                                                
+│           target_resolution: 2.5                                                        
+│           input_resolution: 2.5                                                         
+│           nb_timeseries_image: 16                                                       
+│           duplication_level_noise: 80                                                   
+│           patch_size_input: 256                                                         
+│           split: test                                                                   
+│         normalization_save_path: /work/work/tree/normalization_values_sentinel_1_2/     
+│         normalization_constants: null                                                   
+│                                                                                         
 ├── callbacks
-│   └── model_checkpoint:                                
-│         _target_: lightning.callbacks.ModelCheckpoint  
-│         monitor: val/acc                               
-│         mode: max                                      
-│         save_top_k: 1                                  
-│         save_last: true                                
-│         verbose: false                                 
-│         dirpath: checkpoints/                          
-│         filename: epoch_{epoch:03d}                    
-│         auto_insert_metric_name: false                 
-│       early_stopping:                                  
-│         _target_: lightning.callbacks.EarlyStopping    
-│         monitor: val/acc                               
-│         mode: max                                      
-│         patience: 10                                   
-│         min_delta: 0                                   
-│                                                        
+│   └── model_checkpoint_best:                                                            
+│         _target_: lightning.pytorch.callbacks.ModelCheckpoint                           
+│         dirpath: /work/work/tree/logs/tree/UTAE_SL1_16img/v5_UTAE_SL1_16img/best_checkpo
+│         filename: epoch_{epoch:03d}                                                     
+│         monitor: val/loss                                                               
+│         mode: min                                                                       
+│         save_top_k: 1                                                                   
+│         save_last: true                                                                 
+│         verbose: false                                                                  
+│         auto_insert_metric_name: false                                                  
+│         save_on_train_epoch_end: false                                                  
+│       model_checkpoint_periodic:                                                        
+│         _target_: lightning.pytorch.callbacks.ModelCheckpoint                           
+│         dirpath: /work/work/tree/logs/tree/UTAE_SL1_16img/v5_UTAE_SL1_16img/periodic_che
+│         filename: save_epoch_{epoch:03d}                                                
+│         monitor: val/loss                                                               
+│         mode: min                                                                       
+│         every_n_epochs: 5                                                               
+│         save_top_k: -1                                                                  
+│         save_last: false                                                                
+│         verbose: false                                                                  
+│         auto_insert_metric_name: false                                                  
+│         save_on_train_epoch_end: false                                                  
+│       early_stopping:                                                                   
+│         _target_: lightning.pytorch.callbacks.EarlyStopping                             
+│         monitor: val/loss                                                               
+│         mode: min                                                                       
+│         patience: 10                                                                    
+│         min_delta: 0.01                                                                 
+│       upload_code_as_artifact:                                                          
+│         _target_: src.callbacks.wandb_callbacks.UploadCodeAsArtifact                    
+│         code_dir: /work/work/tree/src                                                   
+│       watch_model:                                                                      
+│         _target_: src.callbacks.wandb_callbacks.WatchModel                              
+│         log: all                                                                        
+│         log_freq: 100                                                                   
+│       log_image_predictions:                                                            
+│         _target_: src.callbacks.wandb_callbacks.LogImagePredictions                     
+│         num_samples: 8                                                                  
+│         freq_train: null                                                                
+│                                                                                         
 ├── logger
-│   └── wandb:                                           
-│         _target_: lightning.pytorch.loggers.wandb.WandbLogger  
-│         project: tree                                  
-│         name: debug                                    
-│         save_dir: /home/thom_bdrs/travail/copenhague/tr
-│         offline: false                                 
-│         id: null                                       
-│         log_model: false                               
-│         prefix: ''                                     
-│         job_type: train                                
-│         group: super_resolution                        
-│         tags:                                          
-│         - super_resolution                             
-│         - canopy                                       
-│         - ESDR                                         
-│         - U-Net                                        
-│                                                        
+│   └── wandb:                                                                            
+│         _target_: lightning.pytorch.loggers.wandb.WandbLogger                           
+│         project: tree                                                                   
+│         name: UTAE_SL1_16img                                                            
+│         save_dir: /work/work/tree/logs/tree/UTAE_SL1_16img/v5_UTAE_SL1_16img            
+│         version: v5_UTAE_SL1_16img                                                      
+│         offline: false                                                                  
+│         id: null                                                                        
+│         log_model: false                                                                
+│         prefix: ''                                                                      
+│         job_type: train                                                                 
+│         group: simple_regression                                                        
+│         tags:                                                                           
+│         - canopy                                                                        
+│         - U-TAE                                                                         
+│                                                                                         
 └── seed
-    └── 12345                                            
+    └── 12345                                                                             

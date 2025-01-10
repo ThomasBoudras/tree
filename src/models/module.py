@@ -4,6 +4,7 @@ import torch
 from lightning import LightningModule
 import os
 import numpy as np
+import torch.nn.functional as F
 
 class Module(LightningModule):
     def __init__(
@@ -15,11 +16,7 @@ class Module(LightningModule):
         test_metrics,
         scheduler,
         optimizer,
-<<<<<<< HEAD
-        log_on_first_validation,
-=======
-        predictions_save_dir=None,        
->>>>>>> 78a79fca5c14bbb13f8dde2972701b8fbd149574
+        predictions_save_dir= None,
     ):
         super().__init__()
 
@@ -34,11 +31,11 @@ class Module(LightningModule):
         self.test_metrics = test_metrics
         self.optimizer = optimizer
         self.scheduler = scheduler
-<<<<<<< HEAD
-        self.log_on_first_validation = log_on_first_validation
-=======
+        self.compute_initial_metrics_state = False
+        self.initialisation_state = False
+        self.initial_metrics = {}
+        self.initial_metrics["val/loss"] = []
         self.predictions_save_dir = predictions_save_dir
->>>>>>> 78a79fca5c14bbb13f8dde2972701b8fbd149574
     
     def configure_optimizers(self):
         optimizer = self.optimizer(params=self.parameters())
@@ -57,31 +54,34 @@ class Module(LightningModule):
         
         return {"optimizer": optimizer}
 
-    def forward(self, x: torch.Tensor):
-        return self.network(x)
+    def forward(self, x: torch.Tensor, meta_data):
+        return self.network(x, meta_data)
 
     def step(self, batch: Any, stage, metrics_function):
         inputs, targets , meta_data = batch
-        preds = self.forward(inputs)
+        preds = self.forward(inputs, meta_data)
+
+        if preds.shape[-1] != targets.shape[-1] :
+            scale_factor = targets.shape[-1] / preds.shape[-1] 
+            preds = F.interpolate(preds, scale_factor=scale_factor, mode='bilinear', align_corners=False)
         
         loss = self.loss(preds, targets)
 
-        if stage == "val" and not self.log_on_first_validation :
-            loss_log = loss * 10
-        else : 
-            loss_log = loss
-
-        self.log(
-                name=os.path.join(stage, "loss"),
-                value=loss_log, 
-                on_step=True,
-                on_epoch=True, 
-                prog_bar=False
-                )
+        if self.compute_initial_metrics_state and stage == "val":
+            self.initial_metrics["val/loss"].append(loss)   
+        else :
+            if self.initialisation_state and stage =="val" :
+                loss = self.initial_metrics["val/loss"]
+            self.log(
+                    name=os.path.join(stage, "loss"),
+                    value=loss, 
+                    on_step=True,
+                    on_epoch=True, 
+                    prog_bar=False
+                    )
     
         if metrics_function :
             metrics_function.update(preds, targets, meta_data)
-
         return loss, preds, targets
     
 
@@ -103,29 +103,43 @@ class Module(LightningModule):
     def final_step(self, stage, metrics_function):
         if metrics_function :
             metrics = metrics_function.compute()
-            for key, value in metrics.items():
-                if isinstance(value, dict):
-                    for metric_name, metric_value in value.items():
+            if self.compute_initial_metrics_state :
+                self.initial_metrics["val/loss"] = torch.mean(torch.stack(self.initial_metrics["val/loss"])).item()
+                for key, value in metrics.items():
+                    if isinstance(value, dict):
+                        for metric_name, metric_value in value.items():
+                            self.initial_metrics[f"{stage}/{key}/{metric_name}"] = metric_value
+                    else :
+                        self.initial_metrics[f"{stage}/{key}"] = value
+
+            else :
+                if self.initialisation_state:
+                    for key, value in metrics.items():
+                        if isinstance(value, dict):
+                            for metric_name in value.keys():
+                                metrics[key][metric_name] = self.initial_metrics[f"{stage}/{key}/{metric_name}"]
+                        else:
+                            metrics[key] = self.initial_metrics[f"{stage}/{key}"]
+                for key, value in metrics.items():
+                    if isinstance(value, dict):
+                        for metric_name, metric_value in value.items():
+                            self.log(
+                            f"{stage}/{key}/{metric_name}",
+                            metric_value,
+                            sync_dist=True,
+                            on_step=False,
+                            on_epoch=True,
+                        )
+
+                    else :
                         self.log(
-                        f"{stage}/{key}/{metric_name}",
-                        metric_value,
-                        sync_dist=True,
-                        on_step=False,
-                        on_epoch=True,
-                    )
-
-                else :
-                    self.log(
-                        f"{stage}/{key}",
-                        value,
-                        sync_dist=True,
-                        on_step=False,
-                        on_epoch=True,
-                    )
+                            f"{stage}/{key}",
+                            value,
+                            sync_dist=True,
+                            on_step=False,
+                            on_epoch=True,
+                        )
             metrics_function.reset()   
-
-        if self.log_on_first_validation == False:
-            self.log_on_first_validation = True
 
         
 
@@ -136,28 +150,18 @@ class Module(LightningModule):
         self.final_step("val", self.val_metrics)
 
     def on_test_epoch_end(self):
-        self.final_step("val", self.val_metrics)
+        self.final_step("val", self.test_metrics)
 
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         # At predict time, there are (normally) only inputs, no targets
-
-        if (len(batch) == 2) and (
-            not isinstance(batch, torch.Tensor)
-        ):  # handle the case of a batch of size 2
-            res = self(batch[0])
-        else:
-            res = self(batch)
+        input, meta_data = batch
+        res = self(input, meta_data)
         if self.predictions_save_dir is not None:
             np.save(
                 os.path.join(self.predictions_save_dir, str(batch_idx) + ".npy"),
                 res.cpu().numpy().astype(np.float16),
             )
-            if len(batch) == 2:  # save also labels
-                np.save(
-                    os.path.join(self.predictions_save_dir, str(batch_idx) + "_label.npy"),
-                    batch[1].cpu().numpy().astype(np.float16),
-                )
-            return None
+
         else:
-            raise Exception("Please give a name for the prediction file ")
+            raise Exception("Please give a name for the prediction dir ")

@@ -6,6 +6,7 @@ from rasterio.windows import from_bounds
 from datetime import datetime, timedelta
 import torchvision.transforms.functional as F
 from torch.utils.data import Sampler
+from skimage.measure import block_reduce
 
 def get_window(
     image_path,
@@ -23,6 +24,17 @@ def get_window(
                 bounds = geometry.bounds
             else:
                 bounds = src.bounds
+        
+        vrt_bounds = src.bounds
+        bounds_within_vrt = (
+            bounds[0] >= vrt_bounds.left and  
+            bounds[1] >= vrt_bounds.bottom and 
+            bounds[2] <= vrt_bounds.right and 
+            bounds[3] <= vrt_bounds.top  
+        )
+        
+        if not bounds_within_vrt : 
+            return np.array([])
 
         window = from_bounds(*bounds, transform=src.transform)
         transform = src.window_transform(window)
@@ -37,22 +49,18 @@ def get_window(
                 target_width = int((bounds[2] - bounds[0]) / resolution)
                 target_height = int((bounds[3] - bounds[1]) / resolution)
 
-                # Resize the data to the target shape, using max pooling within each block
-                def max_pooling_resize(image, target_width, target_height):
-                    output = np.zeros((image.shape[0], target_height, target_width))
-                    scale_x = image.shape[2] / target_width
-                    scale_y = image.shape[1] / target_height
-                    for i in range(target_height):
-                        for j in range(target_width):
-                            # XXX could replace int by rounding
-                            x_start = int(j * scale_x)
-                            x_end = int((j + 1) * scale_x)
-                            y_start = int(i * scale_y)
-                            y_end = int((i + 1) * scale_y)
-                            output[:, i, j] = np.max(image[:, y_start:y_end, x_start:x_end])
-                    return output
+                scale_factor = int(max(2, np.round(resolution / init_resolution)))
+                data = src.read(
+                    out_shape=(
+                        src.count,
+                        int(np.round(target_height * scale_factor, 0)),
+                        int(np.round(target_width * scale_factor, 0)),
+                    ),
+                    resampling=Resampling.bilinear,
+                    window=window,
+                )
+                data = block_reduce(data, block_size=(1, scale_factor, scale_factor), func=np.max)
 
-                data = max_pooling_resize(data, target_width, target_height)
             elif resampling_method == "bilinear" or (resampling_method is None and init_resolution > resolution):
                 scale_factor = init_resolution / resolution
                 data = src.read(
@@ -102,7 +110,6 @@ def get_window(
     else:
         return data
     
-
 class BottomLeftCrop:
     def __init__(self, patch_size):
         self.patch_size = patch_size

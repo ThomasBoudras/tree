@@ -100,7 +100,7 @@ class UNet(nn.Module):
             else:
                 self.out_activation = out_activation
 
-    def forward(self, x):
+    def forward(self, x, meta_data):
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)

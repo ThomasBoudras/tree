@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+  - default
+
+aoi_name: test_opencanopy
+project : "tree_predictions"
+run_name:  EDSR_UNet_SL1
+run_version : v1
+
+input_path :   ${data_dir}/sentinel/composites/one_month_image/
+
+ckpt_path : /work/work/tree/logs/test/EDSR_UNet_SL1/EDSR_UNet_SL1/EDSR_UNet_SL1_v4/periodic_checkpoints/save_epoch_009.ckpt
+
+aoi_path: ${data_dir}/utils/geometries.geojson  # path to a shapefile (any file that can be read by geopandas.read_file), only used if aoi_bounds is null
+split: test # select "test" tiles from "split" column (if aoi_path is not null)
+lidar_year: null # select "tiles" from "lidar_year" column that match lidar_year (if aoi_path is not null)
+

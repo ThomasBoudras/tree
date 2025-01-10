@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+    - override /experiment: unet_sl1
+
+project : tree_test
+only_test : true
+ckpt_path : /work/work/tree/logs/tree/UNet_SL1/v2_UNet_SL1/best_checkpoints/epoch_029.ckpt
+datamodule :
+    instance :
+        patch_size_input: 240
+        patch_size_target: 400
+    
+    dataset : 
+        input_resolution : 2.5
+        target_resolution : 1.5
+        max_bounds_size: 620
