@@ -23,9 +23,9 @@ class sentinelDataset(Dataset):
         max_year: int,
         target_resolution: float,
         input_resolution : int,
-        max_bounds_size : int,
         nb_timeseries_image,
-        duplication_level_noise = 20,
+        patch_size_input, 
+        duplication_level_noise,
         split: str = None,
         transform_input : v2 = None,
         transform_target: v2 = None,
@@ -45,7 +45,8 @@ class sentinelDataset(Dataset):
         self.duplication_level_noise = duplication_level_noise
         self.transform_input = transform_input
         self.transform_target = transform_target
-        self.max_bounds_size = max_bounds_size
+        self.patch_size_input = patch_size_input
+        self.max_bounds_size = patch_size_input*input_resolution + 10
         
         self.geometries_path = geometries_path
         self.geometries = gpd.read_file(self.geometries_path)
@@ -111,6 +112,7 @@ class sentinelDataset(Dataset):
             resolution=self.target_resolution
         )
         target = target.astype(np.float32).transpose(1, 2, 0)
+
 
         if self.replace_nan_by_zero_in_target:
             target[np.isnan(target)] = 0

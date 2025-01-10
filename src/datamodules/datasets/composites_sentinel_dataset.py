@@ -21,7 +21,7 @@ class sentinelDataset(Dataset):
         max_year: int,
         target_resolution: float,
         input_resolution : int,
-        max_bounds_size,
+        patch_size_input,
         split: str = None,
         transform_input : v2 = None,
         transform_target: v2 = None,
@@ -38,7 +38,8 @@ class sentinelDataset(Dataset):
         self.target_unit = target_unit
         self.target_resolution = target_resolution
         self.input_resolution = input_resolution
-        self.max_bounds_size = max_bounds_size
+        self.patch_size_input = patch_size_input
+        self.max_bounds_size = patch_size_input*input_resolution + 10
         self.transform_input = transform_input
         self.transform_target = transform_target
         self.geometries = (

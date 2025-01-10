@@ -7,8 +7,8 @@ defaults:
 seed: 12345
 project : "tree"
 run_name: EDSR_UTAE_SL1_32img
-run_version: v2_${run_name}
-data_dir: /home/projects/ku_00196/people/thobou/data/
+run_version: v4_${run_name}
+data_dir: /work/data
 ckpt_path : null
 load_just_weights: False
 
@@ -19,9 +19,9 @@ datamodule:
         max_n_inputs_for_moments_computation: 1000
         max_n_inputs_per_epoch : null
         normalization_save_path: ${work_dir}/normalization_values_sentinel_1_2/
-        patch_size_input: 32
-        patch_size_target: 128
-        batch_size: 2
+        patch_size_input: 64
+        patch_size_target: 256
+        batch_size: 4
     dataset:
         input_path: ${data_dir}/sentinel/timeseries/one_month_image
         target_path: ${data_dir}/lidar/france
@@ -32,7 +32,6 @@ datamodule:
         target_resolution : 2.5
         nb_timeseries_image: 32
         duplication_level_noise: 80
-        max_bounds_size: 330
 
 model:
     network:

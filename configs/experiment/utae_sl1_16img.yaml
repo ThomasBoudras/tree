@@ -7,8 +7,8 @@ defaults:
 seed: 12345
 project : "tree"
 run_name: UTAE_SL1_16img
-run_version: v3_${run_name}
-data_dir: /home/projects/ku_00196/people/thobou/data
+run_version: v5_${run_name}
+data_dir: /work/data
 ckpt_path : null
 load_just_weights: False 
 
@@ -19,9 +19,9 @@ datamodule:
         max_n_inputs_for_moments_computation: 1000
         max_n_inputs_per_epoch : null
         normalization_save_path: ${work_dir}/normalization_values_sentinel_1_2/
-        patch_size_input: 128
-        patch_size_target: 128
-        batch_size: 4
+        patch_size_input: 256
+        patch_size_target: 256
+        batch_size: 8
         
     dataset:
         input_path: ${data_dir}/sentinel/timeseries/one_month_image

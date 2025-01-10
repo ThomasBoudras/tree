@@ -11,6 +11,7 @@ defaults:
 
     - experiment: null
     - predict: null
+    - test : null
     - hparams_search: null
 
     - hydra: default.yaml

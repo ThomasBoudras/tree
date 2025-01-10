@@ -10,13 +10,13 @@ seed: 12345
 aoi_name: SR_end_2_end # if null, the top left corner and bottom right corner of aoi_coords will be used
 run_name: SR_regre_end2end
 run_version: RCAN_UNet_SL1_predict_2023
-data_dir: /home/projects/ku_00196/people/thobou/data/
+data_dir: /work/data
 # input_path :  ${data_dir}/sentinel/composite/chantilly/2022/02-15_plus_minus_15_days/
 input_path :  ${data_dir}/sentinel/composite/chantilly/2023/09-15_plus_minus_15_days/
 
-# ckpt_path : /home/projects/ku_00196/people/thobou/tree/logs/tree/EDSR_UNet_SL1_v4/periodic_checkpoints/save_epoch_009.ckpt
-ckpt_path : /home/projects/ku_00196/people/thobou/tree/logs/tree/RCAN_UNet_SL1_v3/best_checkpoints/epoch_010.ckpt
-# ckpt_path : /home/projects/ku_00196/people/thobou/tree/logs/tree/EDSR_UNet_nMAE_v3/best_checkpoints/epoch_005.ckpt
+# ckpt_path : /work/work/tree/logs/tree/EDSR_UNet_SL1_v4/periodic_checkpoints/save_epoch_009.ckpt
+ckpt_path : /work/work/tree/logs/tree/RCAN_UNet_SL1_v3/best_checkpoints/epoch_010.ckpt
+# ckpt_path : /work/work/tree/logs/tree/EDSR_UNet_nMAE_v3/best_checkpoints/epoch_005.ckpt
 
 load_just_weights: True
 

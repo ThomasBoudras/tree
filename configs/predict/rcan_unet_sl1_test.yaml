@@ -12,7 +12,7 @@ run_version : v1
 
 input_path :  ${data_dir}/sentinel/composites/one_month_image/
 
-ckpt_path : /home/projects/ku_00196/people/thobou/tree/logs/tree/RCAN_UNet_SL1/RCAN_UNet_SL1_v3/best_checkpoints/epoch_010.ckpt
+ckpt_path : /work/work/tree/logs/tree/RCAN_UNet_SL1/RCAN_UNet_SL1_v3/best_checkpoints/epoch_010.ckpt
 
 aoi_path: ${data_dir}/utils/geometries.geojson  # path to a shapefile (any file that can be read by geopandas.read_file), only used if aoi_bounds is null
 split: test # select "test" tiles from "split" column (if aoi_path is not null)

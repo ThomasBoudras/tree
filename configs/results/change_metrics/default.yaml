@@ -9,7 +9,7 @@ delta_fig: -10  # minimum change in height (in meters) used for plots
 min_area_fig: 100  # minimum area of a contiguous change of more than delta (in square meters) used for plots
 
 version : RCAN_UNet_SL1
-root_dir: /home/projects/ku_00196/people/thobou/tree/logs/change_detections/
+root_dir: /work/work/tree/logs/change_detections/
 extract_tif: true # extract a tif image from predictions with the same bounds as labels from which the mask is computed, and also extract masked images from labels to mask on
 
 year_1: 2022
@@ -33,23 +33,23 @@ classification:
   crs: 2154
 
 predictions_1:
-  path: /home/projects/ku_00196/people/thobou/tree/logs/tree/${version}_predict_2022/predictions/SR_end_2_end/${version}_predict_2022/data/predictions.vrt
+  path: /work/work/tree/logs/tree/${version}_predict_2022/predictions/SR_end_2_end/${version}_predict_2022/data/predictions.vrt
   # path : ${root_dir}/data/open_canopy_predictions_1_m.tif
   unit: m # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
 
 predictions_2:
-  path: /home/projects/ku_00196/people/thobou/tree/logs/tree/${version}_predict_2023/predictions/SR_end_2_end/${version}_predict_2023/data/predictions.vrt
+  path: /work/work/tree/logs/tree/${version}_predict_2023/predictions/SR_end_2_end/${version}_predict_2023/data/predictions.vrt
   # path : ${root_dir}/data/open_canopy_predictions_2_m.tif
   unit: m # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
 
 inputs_1:
-  path: /home/projects/ku_00196/people/thobou/data/sentinel/composites/chantilly/2022/02-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
+  path: /work/datasentinel/composites/chantilly/2022/02-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
   crs: 2154
 
 inputs_2:
-  path: /home/projects/ku_00196/people/thobou/data/sentinel/composites/chantilly/2023/09-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
+  path: /work/datasentinel/composites/chantilly/2023/09-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
   crs: 2154
 
 save_dir: ${root_dir}/${version}/results

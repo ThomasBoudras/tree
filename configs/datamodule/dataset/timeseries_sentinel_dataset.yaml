@@ -9,7 +9,6 @@ target_resolution: 2.5
 input_resolution: 10
 nb_timeseries_image: 8
 duplication_level_noise : null
-max_bounds_size: 1000
 
 train_dataset:
   _target_: src.datamodules.datasets.timeseries_sentinel_dataset.sentinelDataset
@@ -24,7 +23,7 @@ train_dataset:
   input_resolution: ${datamodule.dataset.input_resolution}  
   nb_timeseries_image: ${datamodule.dataset.nb_timeseries_image}
   duplication_level_noise: ${datamodule.dataset.duplication_level_noise}
-  max_bounds_size: ${datamodule.dataset.max_bounds_size}
+  patch_size_input: ${datamodule.instance.patch_size_input}
   split: train
 
 val_dataset:
@@ -40,7 +39,7 @@ val_dataset:
   input_resolution: ${datamodule.dataset.input_resolution}  
   nb_timeseries_image: ${datamodule.dataset.nb_timeseries_image}
   duplication_level_noise: ${datamodule.dataset.duplication_level_noise}
-  max_bounds_size: ${datamodule.dataset.max_bounds_size}
+  patch_size_input: ${datamodule.instance.patch_size_input}
   split: val
 
 test_dataset:
@@ -56,5 +55,5 @@ test_dataset:
   input_resolution: ${datamodule.dataset.input_resolution}  
   nb_timeseries_image: ${datamodule.dataset.nb_timeseries_image}
   duplication_level_noise: ${datamodule.dataset.duplication_level_noise}
-  max_bounds_size: ${datamodule.dataset.max_bounds_size}
+  patch_size_input: ${datamodule.instance.patch_size_input}
   split: test

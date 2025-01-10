@@ -3,7 +3,7 @@ seed: 12345
 project : "tree"
 run_name: EDSR_UNet_SL1_res1-5
 run_version: v1_${run_name}
-data_dir: /home/projects/ku_00196/people/thobou/data/
+data_dir: /work/data
 ckpt_path : null
 load_just_weights: False
 

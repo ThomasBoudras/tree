@@ -1,13 +1,13 @@
 # @package _global_
 defaults:
     - override /model/network: classic_network
-    - override /model/network/regression: SuperResUnet
+    - override /model/network/regression: UNet
 
 seed: 12345
 project : "tree"
 run_name: UNet_SL1
 run_version: v2_${run_name}
-data_dir: /home/projects/ku_00196/people/thobou/data
+data_dir: /work/data
 ckpt_path : null
 load_just_weights: False 
 

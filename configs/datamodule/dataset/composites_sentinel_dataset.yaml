@@ -24,7 +24,7 @@ train_dataset:
   max_year: ${datamodule.dataset.max_year}
   target_resolution: ${datamodule.dataset.target_resolution}
   input_resolution: ${datamodule.dataset.input_resolution}
-  max_bounds_size: ${datamodule.dataset.max_bounds_size}
+  patch_size_input: ${datamodule.instance.patch_size_input}
   split: train
 
 val_dataset:
@@ -39,7 +39,7 @@ val_dataset:
   max_year: ${datamodule.dataset.max_year} 
   target_resolution: ${datamodule.dataset.target_resolution}
   input_resolution: ${datamodule.dataset.input_resolution}  
-  max_bounds_size: ${datamodule.dataset.max_bounds_size}
+  patch_size_input: ${datamodule.instance.patch_size_input}
   split: val
 
 test_dataset:
@@ -54,5 +54,5 @@ test_dataset:
   max_year: ${datamodule.dataset.max_year} 
   target_resolution: ${datamodule.dataset.target_resolution}
   input_resolution: ${datamodule.dataset.input_resolution}  
-  max_bounds_size: ${datamodule.dataset.max_bounds_size}
+  patch_size_input: ${datamodule.instance.patch_size_input}
   split: test

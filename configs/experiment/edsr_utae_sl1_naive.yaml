@@ -8,7 +8,7 @@ seed: 12345
 project : "tree"
 run_name: EDSR_UTAE_SL1_naive
 run_version: v2_${run_name}
-data_dir: /home/projects/ku_00196/people/thobou/data/
+data_dir: /work/data
 ckpt_path : null
 load_just_weights: False
 

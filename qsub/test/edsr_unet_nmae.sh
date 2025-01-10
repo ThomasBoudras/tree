@@ -33,4 +33,4 @@ conda activate tree-env
 # This is where the work is done
 # Make sure that this script is not bigger than 64kb ~ 150 lines, 
 # otherwise put in separate script and execute from here
-python run.py experiment=edsr_unet_nmae only_test=true project=tree_test
+python run.py experiment=edsr_unet_nmae only_test=true project=tree_test datamodule/instance/patch_size_target

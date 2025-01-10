@@ -7,8 +7,8 @@ from line_profiler import LineProfiler
 import numpy as np
 
 # Configuration des chemins et des paramètres
-data_dir = "/home/projects/ku_00196/people/thobou/data/"
-normalization_save_path = "/home/projects/ku_00196/people/thobou/tree/normalization_values_sentinel_1_2/"
+data_dir = "/work/data"
+normalization_save_path = "/work/work/tree/normalization_values_sentinel_1_2/"
 patch_size_input = 128
 patch_size_target = 32
 input_mean = np.load(os.path.join(normalization_save_path, "mean.npy"))
