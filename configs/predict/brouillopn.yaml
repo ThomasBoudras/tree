@@ -1,0 +1,68 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: null
+  - override /callbacks: null
+  - override /model/metrics: null
+  - override /model/network/super_resolution: RCAN
+
+seed: 12345
+aoi_name: SR_end_2_end # if null, the top left corner and bottom right corner of aoi_coords will be used
+run_name: SR_regre_end2end
+run_version: RCAN_UNet_SL1_predict_2023
+data_dir: /work/data
+# input_path :  ${data_dir}/sentinel/composite/chantilly/2022/02-15_plus_minus_15_days/
+input_path :  ${data_dir}/sentinel/composite/chantilly/2023/09-15_plus_minus_15_days/
+
+# ckpt_path : /work/work/tree/logs/tree/EDSR_UNet_SL1_v4/periodic_checkpoints/save_epoch_009.ckpt
+ckpt_path : /work/work/tree/logs/tree/RCAN_UNet_SL1_v3/best_checkpoints/epoch_010.ckpt
+# ckpt_path : /work/work/tree/logs/tree/EDSR_UNet_nMAE_v3/best_checkpoints/epoch_005.ckpt
+
+load_just_weights: True
+
+
+# Chantilly changes predictions area 
+aoi_bounds: [654800, 6888800, 672600, 6904000]
+
+aoi_crs: 2154
+
+
+# aoi_bounds: null
+aoi_path: null #${data_dir}/utils/geometries_with_splits.parquet # path to a shapefile (any file that can be read by geopandas.read_file), only used if aoi_bounds is null
+# split: test # select "test" tiles from "split" column (if aoi_path is not null)
+# lidar_year: 2021 # select "tiles" from "lidar_year" column that match lidar_year (if aoi_path is not null)
+ # a versioned folder will be created in save_dir/aoi_name, if null use current date (format: "%Y%m%d%H%M")
+
+normalization_constants_path: ${work_dir}/normalization_values_sentinel_1_2/  # FIXME put null for recent models, avoid this normalization_constants_path
+
+save_dir: ${log_dir}/predictions
+
+
+patch_size: 3000
+crop_size: 210
+num_workers: 8  # Use 0 for interactive mode or when calling predict_on_aoi main function several times (or deallocate workers?)
+batch_size: 1
+input_resolution : 10
+target_resolution : 2.5
+
+dataset :
+  _target_: src.datamodules.datasets.grid_dataset.GridDataset
+  vrt_path_base: ${input_path}
+  patch_size: ${patch_size}
+  crop_size: ${crop_size}
+  resolution : ${input_resolution}
+
+trainer:
+  accelerator: auto
+  devices: 1
+  # strategy: ddp
+  num_nodes: 1
+  deterministic: True
+  precision: 16-mixed
+
+model:
+  instance:
+    train_metrics: null
+    val_metrics: null 
+    test_metrics: null
+    predictions_save_dir : ${save_dir}

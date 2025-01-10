@@ -1,7 +1,7 @@
 defaults:
   - network: End_2_end
   - loss: smooth_L1
-  - metrics: Opencanopy_metrics
+  - metrics: classic_method
   - _self_
 
 optimizer:

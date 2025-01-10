@@ -2,7 +2,7 @@
 
 wandb:
     _target_: lightning.pytorch.loggers.wandb.WandbLogger
-    project: "tree"
+    project: ${project}
     name: ${run_name}
     save_dir: ${log_dir}
     version: ${run_version} #Sets the version, mainly used to resume a previous run.

@@ -1,0 +1,53 @@
+# @package _global_
+defaults:
+    - override /model/network/super_resolution: RCAN
+
+seed: 12345
+project : "tree"
+run_name: RCAN_UNet_SL1
+run_version: v3_${run_name}
+data_dir: /work/data
+ckpt_path : null
+load_just_weights: False
+
+datamodule:
+    instance:
+        num_workers: 8
+        persistent_workers: True
+        max_n_inputs_for_moments_computation: 1000
+        max_n_inputs_per_epoch : null
+        normalization_save_path: ${work_dir}/normalization_values_sentinel_1_2/
+        patch_size_input: 64
+        patch_size_target: 256
+        batch_size: 8
+    dataset:
+        input_path: ${data_dir}/sentinel/composites/one_month_image/
+        target_path: ${data_dir}/lidar/france
+        geometries_path : ${data_dir}/utils/geometries_cleaned.geojson
+        min_year: 2021
+        max_year: 2023
+
+
+model:
+    network:
+        super_resolution:
+            pretrained_model_path:  ${data_dir}/utils/RCAN_BIX4.pt
+    metrics:
+        forest_mask_path: ${data_dir}/utils/forest_mask.parquet
+        classification_path: ${data_dir}/lidar/france
+    optimizer:
+        lr : 1e-5
+    scheduler :
+        patience : 3
+
+trainer:
+    accelerator: gpu
+    num_nodes: 1
+    log_every_n_steps: 50
+
+
+logger:
+    wandb:
+        tags: ["super_resolution", "canopy", "EDSR", "U-Net"]
+        job_type: "train"
+        group: "super_resolution"

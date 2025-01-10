@@ -99,7 +99,7 @@ def print_config(
         if isinstance(config_section, DictConfig):
             branch_content = OmegaConf.to_yaml(config_section, resolve=resolve)
 
-        branch.add(rich.syntax.Syntax(branch_content, "yaml"))
+        branch.add(rich.syntax.Syntax(branch_content, "yaml", theme='ansiwhite'))
 
     rich.print(tree)
 
@@ -164,10 +164,12 @@ def finish(
     logger,
 ) -> None:
     """Makes sure everything closed properly."""
-
     # without this sweeps with wandb logger might crash!
     for lg in logger:
-        if isinstance(lg, L.loggers.wandb.WandbLogger):
+        if isinstance(lg, L.pytorch.loggers.wandb.WandbLogger):
             import wandb
 
             wandb.finish()
+
+    if config.trainer.profiler :
+        trainer.profiler.describe()

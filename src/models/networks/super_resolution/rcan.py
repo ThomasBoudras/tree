@@ -4,6 +4,7 @@ import math
 
 import torch
 import torch.nn as nn
+import numpy as np 
 
 from src.utils import utils
 
@@ -26,7 +27,7 @@ class RCAN(nn.Module):
         
         kernel_size = 3
         act = nn.ReLU(True)
-
+        self.n_channels = n_channels
 
         conv=default_conv
 
@@ -54,7 +55,7 @@ class RCAN(nn.Module):
         if pretrained_model_path :
             self.load_partial_weight(pretrained_model_path)
 
-    def forward(self, x):
+    def forward(self, x, meta_data):
         x = self.head(x)
 
         res = self.body(x)
@@ -69,14 +70,15 @@ class RCAN(nn.Module):
         load_from = torch.load(pretrained_model,  map_location=torch.device('cpu'), weights_only=True)
 
         for module_name , module_tensor in load_from.items():
+            nb_repeat = int(np.ceil(self.n_channels/3))
             if module_name == "head.0.weight"  :
-                load_from[module_name] = module_tensor.repeat(1, 4, 1, 1)
+                load_from[module_name] = module_tensor.repeat(1, nb_repeat, 1, 1)[:,:self.n_channels, :,:]
             
             if module_name == "tail.1.weight" :
-                load_from[module_name] = module_tensor.repeat(4, 1, 1, 1)
+                load_from[module_name] = module_tensor.repeat(nb_repeat, 1, 1, 1)[:self.n_channels, :, :, :]
 
             if module_name == "tail.1.bias" :
-                load_from[module_name] = module_tensor.repeat(4)
+                load_from[module_name] = module_tensor.repeat(nb_repeat)[:self.n_channels]
 
 
         self.load_state_dict(load_from, strict=False)

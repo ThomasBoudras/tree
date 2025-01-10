@@ -1,33 +1,36 @@
 # --------- pytorch --------- #
-torch>=1.9.0
-torchvision>=0.9.1
-pytorch-lightning>=1.3.8
+lightning
+pytorch-lightning
+torch
+torchvision
 
 # --------- hydra --------- #
-hydra-core==1.3.2
-hydra-colorlog==1.2.0
-hydra-optuna-sweeper==1.2.0
+hydra-core
+hydra-colorlog
+hydra-optuna-sweeper
 # hydra-ax-sweeper
 # hydra-ray-launcher
 # hydra-submitit-launcher
 
 # --------- loggers --------- #
-wandb
+wandb==0.18.5
 # neptune-client
 # mlflow
 # comet-ml
 # torch_tb_profiler
 
 # --------- linters --------- #
-pre-commit      # hooks for applying linters on commit
+pre-commit==4.0.1      # hooks for applying linters on commit
 
 # --------- others --------- #
 # python-dotenv   # loading env variables from .env file
-rich            # beautiful text formatting in terminal
-scikit-learn    # used in some callbacks
-seaborn         # used in some callbacks
+rich
+scikit-learn
+seaborn
 rasterio
 fiona
-lightning
-geopandas
 pyarrow
+geopandas==1.0.1
+numpy
+scipy
+scikit-image
