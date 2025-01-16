@@ -137,7 +137,7 @@ class EDSR(nn.Module):
 
 
     def forward(self, x, meta_data):
-
+        print()
         x = self.head(x)
 
         res = self.body(x)

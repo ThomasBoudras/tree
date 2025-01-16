@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /experiment: edsr_unet_sl1
+  - override /experiment: super_res_unet_sl1
   - override /datamodule: null
   - override /callbacks: null
   - override /model/metrics: null
@@ -15,7 +15,7 @@ run_year: "2022"
 
 data_dir: /work/data
 input_path :  ${data_dir}/sentinel/composites/chantilly/${run_year}
-ckpt_path : /work/work/tree/logs/tree/EDSR_UNet_SL1/v6_EDSR_UNet_SL1/best_checkpoints/epoch_036.ckpt
+ckpt_path : /work/work/tree/logs/tree/SuperResUnet_SL1/v4_SuperResUnet_SL1/best_checkpoints/epoch_029.ckpt
 load_just_weights: True
 
 # Chantilly changes predictions area 
@@ -26,7 +26,7 @@ split: test # select "test" tiles from "split" column (if aoi_path is not null)
 lidar_year: null # select "tiles" from "lidar_year" column that match lidar_year (if aoi_path is not null)
 
 normalization_constants_path: ${work_dir}/normalization_values_sentinel_1_2/  # FIXME put null for recent models, avoid this normalization_constants_path
-save_dir: ${log_dir}/predictions/
+save_dir: ${log_dir}/predictions
 
 patch_size: 3000
 crop_size: 210

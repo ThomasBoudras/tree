@@ -20,7 +20,7 @@ datamodule:
     dataset:
         input_path: ${data_dir}/sentinel/composites/one_month_image/
         target_path: ${data_dir}/lidar/france
-        geometries_path : ${data_dir}/utils/geometries_cleaned.geojson
+        geometries_path : ${data_dir}/utils/geometries_40_days_cleaned.geojson
         min_year: 2021
         max_year: 2023
 

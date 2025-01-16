@@ -2,7 +2,7 @@
 defaults:
     - override /model/network/regression: UTAE
     - override /model/network/super_resolution: EDSR_TS_naive
-    - override /datamodule/dataset : timeseries_sentinel_dataset
+    - override /datamodule/dataset : SR_timeseries_sentinel_dataset
 
 seed: 12345
 project : "tree"

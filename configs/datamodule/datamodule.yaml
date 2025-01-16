@@ -1,5 +1,5 @@
 defaults:
-  - dataset: composites_sentinel_dataset
+  - dataset: SR_composites_sentinel_dataset
   - _self_
 
 instance:

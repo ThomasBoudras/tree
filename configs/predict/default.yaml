@@ -7,25 +7,21 @@ defaults:
 
 seed: 12345
 aoi_name: default # if null, the top left corner and bottom right corner of aoi_coords will be used
-run_name: default
 run_version: ${run_name}_main
-data_dir: /work/data
 
+data_dir: /work/data
 input_path :  null
 ckpt_path : null
 load_just_weights: True
 
 aoi_bounds: null
 aoi_crs: 2154
-
 aoi_path: null  # path to a shapefile (any file that can be read by geopandas.read_file), only used if aoi_bounds is null
 split: test # select "test" tiles from "split" column (if aoi_path is not null)
 lidar_year: null # select "tiles" from "lidar_year" column that match lidar_year (if aoi_path is not null)
 
 normalization_constants_path: ${work_dir}/normalization_values_sentinel_1_2/  # FIXME put null for recent models, avoid this normalization_constants_path
-
 save_dir: ${log_dir}/predictions
-
 
 patch_size: 3000
 crop_size: 210

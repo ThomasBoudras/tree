@@ -1,10 +1,11 @@
 # @package _global_
 
 defaults:
-  - override /experiment: edsr_unet_sl1
-  - override /datamodule: null
+  - override /experiment: edsr_utae_sl1_naive 
+  - override /datamodule/dataset: null
   - override /callbacks: null
   - override /model/metrics: null
+
 
 seed: 12345 
 print_config: true
@@ -12,10 +13,11 @@ print_config: true
 aoi_name: Chantilly
 project : "tree_predictions"
 run_year: "2022"
+reference_date : "20220215"
 
 data_dir: /work/data
-input_path :  ${data_dir}/sentinel/composites/chantilly/${run_year}
-ckpt_path : /work/work/tree/logs/tree/EDSR_UNet_SL1/v6_EDSR_UNet_SL1/best_checkpoints/epoch_036.ckpt
+input_path :  ${data_dir}/sentinel/timeseries/chantilly/${run_year}
+ckpt_path : /work/work/tree/logs/tree/EDSR_UTAE_SL1_naive/v2_EDSR_UTAE_SL1_naive/best_checkpoints/epoch_029.ckpt
 load_just_weights: True
 
 # Chantilly changes predictions area 
@@ -26,7 +28,7 @@ split: test # select "test" tiles from "split" column (if aoi_path is not null)
 lidar_year: null # select "tiles" from "lidar_year" column that match lidar_year (if aoi_path is not null)
 
 normalization_constants_path: ${work_dir}/normalization_values_sentinel_1_2/  # FIXME put null for recent models, avoid this normalization_constants_path
-save_dir: ${log_dir}/predictions/
+save_dir: ${log_dir}/predictions
 
 patch_size: 3000
 crop_size: 210
@@ -36,12 +38,15 @@ input_resolution : 10
 target_resolution : 2.5
 
 dataset :
-  _target_: src.datamodules.datasets.composites_grid_dataset.GridDataset
+  _target_: src.datamodules.datasets.timeseries_grid_dataset.GridDataset
   bounds : ${aoi_bounds}
   vrt_path_base: ${input_path}
   patch_size: ${patch_size}
   crop_size: ${crop_size}
   resolution : ${input_resolution}
+  reference_date : ${reference_date}
+  nb_timeseries_image : 8 
+  duplication_level_noise : 80
 
 trainer:
   accelerator: auto

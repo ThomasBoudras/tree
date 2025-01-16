@@ -141,9 +141,7 @@ class UTAE(nn.Module):
                 feature_maps[-(i + 2)], pad_mask=pad_mask, attn_mask=att
             )
             out = self.up_blocks[i](out, skip)
-
         out = self.out_conv(out)
-
         return out
 
 

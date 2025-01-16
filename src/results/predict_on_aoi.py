@@ -60,15 +60,15 @@ def predict_on_aoi(config: DictConfig) -> None:
     if (config.aoi_bounds is not None) and (config.aoi_path is not None):
         raise ValueError("Cannot provide both aoi_bounds and aoi_path, one of them must be null.")
 
-    if config.run_version is not None:
+    if config.run_year is not None:
         # FIXME why does this take out "_" put "" in config
-        run_version = str(config.run_version)
+        run_year = str(config.run_year)
     else:
-        run_version = datetime.now().strftime("%Y%m%d%H%M")
+        run_year = "test"
 
-    predictions_dir = os.path.join(save_dir, aoi_name, run_version)
-    predictions_dir_tmp = os.path.join(save_dir, aoi_name, run_version, "tmp")
-    predictions_dir_data = os.path.join(save_dir, aoi_name, run_version, "data")
+    predictions_dir = os.path.join(save_dir, aoi_name, run_year)
+    predictions_dir_tmp = os.path.join(save_dir, aoi_name, run_year, "tmp")
+    predictions_dir_data = os.path.join(save_dir, aoi_name, run_year, "data")
 
     if not os.path.exists(predictions_dir):
         os.makedirs(predictions_dir)
@@ -155,7 +155,7 @@ def predict_on_aoi(config: DictConfig) -> None:
         log.info("Starting training from scratch!")
         ckpt_path = None
 
-    input_path = os.path.join(config.input_path, f"s2/s2_EPSG2154.vrt")
+    
     # For future versions hardcode the normalization constatns in the config
     normalization_constants_path = os.path.expanduser(config.normalization_constants_path)
     input_mean = np.load(os.path.join(normalization_constants_path, "mean.npy"))
@@ -220,7 +220,6 @@ def predict_on_aoi(config: DictConfig) -> None:
         log.info(f"Instantiating dataset <{config.dataset._target_}>")
         grid_dataset = hydra.utils.instantiate(config.dataset, bounds = bounds, transform=transform, aoi_gdf=row_gdf)
 
-
         bounds = grid_dataset.bounds
 
         predict_dataloader = DataLoader(
@@ -257,48 +256,50 @@ def predict_on_aoi(config: DictConfig) -> None:
             batch_pred = np.load(pred_file)
             for ix, pred in enumerate(batch_pred):
                 ix_grid = config.batch_size * batch_idx + ix
-                with rasterio.open(input_path) as src:
-                    sample_bounds = patch_bounds[ix_grid]
-                    output_path = os.path.join(predictions_dir_tmp_batch, str(ix_grid) + ".tif")
-                    
-                    pixel_crop_size = int(config.crop_size / config.target_resolution)
+                sample_bounds = patch_bounds[ix_grid]
+                output_path = os.path.join(predictions_dir_tmp_batch, str(ix_grid) + ".tif")
+                
+                pixel_crop_size = int(config.crop_size / config.target_resolution)
 
-                    sample_bounds = (
-                        sample_bounds[0] + config.crop_size,
-                        sample_bounds[1] + config.crop_size,
-                        sample_bounds[2] - config.crop_size,
-                        sample_bounds[3] - config.crop_size
-                        )
-                    
+                sample_bounds = (
+                    sample_bounds[0] + config.crop_size,
+                    sample_bounds[1] + config.crop_size,
+                    sample_bounds[2] - config.crop_size,
+                    sample_bounds[3] - config.crop_size
+                    )
+                
+                print(f"initial pred {pred}")
+                # clip negative values to 0
+                pred = np.clip(pred, a_min=0, a_max=None)
+                print(f"2 pred {pred}")
+                pred = pred.squeeze().astype(np.uint16)
+                print(f"3 pred {pred}")
+                pred = pred[pixel_crop_size : -pixel_crop_size, pixel_crop_size : -pixel_crop_size]
+                print(f"4 pred {pred}")
 
-                    # clip negative values to 0
-                    pred = np.clip(pred, a_min=0, a_max=None)
-                    pred = pred.squeeze().astype(np.uint16)
-                    pred = pred[pixel_crop_size : -pixel_crop_size, pixel_crop_size : -pixel_crop_size]
+                height, width = pred.shape
 
-                    height, width = pred.shape
+                transform = from_bounds(*sample_bounds, width, height)
+                print(f"bounds {sample_bounds}")
 
-                    transform = from_bounds(sample_bounds[0], sample_bounds[1], sample_bounds[2], sample_bounds[3], width, height)
-
-
-                    with rasterio.open(
-                        output_path,
-                        "w",
-                        driver="GTiff",
-                        height=height,
-                        width=width,
-                        count=1,
-                        dtype=pred.dtype,
-                        crs="EPSG:2154",  # Remplacer par le CRS approprié si nécessaire
-                        transform=transform,
-                    ) as dst:
-                        dst.write(pred, 1)
+                with rasterio.open(
+                    output_path,
+                    "w",
+                    driver="GTiff",
+                    height=height,
+                    width=width,
+                    count=1,
+                    dtype=pred.dtype,
+                    crs="EPSG:2154",  # Remplacer par le CRS approprié si nécessaire
+                    transform=transform,
+                ) as dst:
+                    dst.write(pred, 1)
                         
             # XXX to increase speed of the second concat, would be faster to save without compression at this stage
-            print(f"jpg saved in {os.path.join(predictions_dir_tmp, f'{batch_idx}_predictions.jp2')}")
+            print(f"jpg saved in {os.path.join(predictions_dir_tmp, f'{config.run_name}_{config.run_year}_{batch_idx}_pred.jp2')}")
             concat_tif_to_jp2(
                 predictions_dir_tmp_batch,
-                os.path.join(predictions_dir_tmp, f"{batch_idx}_predictions.jp2"),
+                os.path.join(predictions_dir_tmp, f"{config.run_name}_{config.run_year}_{batch_idx}_pred.jp2"),
                 pattern=".tif",
             )
             # Remove npy file
@@ -306,7 +307,7 @@ def predict_on_aoi(config: DictConfig) -> None:
             shutil.rmtree(predictions_dir_tmp_batch)
 
         concat_tif_to_jp2(
-            predictions_dir_tmp, os.path.join(predictions_dir_data, f"{i}_predictions.jp2"), pattern=".jp2"
+            predictions_dir_tmp, os.path.join(predictions_dir_data, f"{config.run_name}_{config.run_year}_{i}_pred.jp2"), pattern=".jp2"
         )
 
         # remove old predictions_dir
@@ -314,7 +315,7 @@ def predict_on_aoi(config: DictConfig) -> None:
         os.makedirs(predictions_dir_tmp)
 
     # Create vrt with predictions
-    vrt_path = os.path.join(predictions_dir_data, "predictions.vrt")
+    vrt_path = os.path.join(predictions_dir_data, f"{config.run_name}_{config.run_year}_pred.vrt")
     files_list = [
         os.path.join(predictions_dir_data, x) for x in os.listdir(predictions_dir_data) if x.endswith(".jp2")
     ]
@@ -323,9 +324,13 @@ def predict_on_aoi(config: DictConfig) -> None:
     if bounds is not None:
         # Translate to bounds (the grid might be bigger than bounds)
         # The projWin parameter specifies the spatial extent in the format (minX, maxY, maxX, minY)
-        aoi_vrt_path = os.path.join(predictions_dir, "predictions_aoi.vrt")
+        aoi_vrt_path = os.path.join(predictions_dir, f"{config.run_name}_{config.run_year}_pred_aoi.vrt")
         ds = gdal.Translate(aoi_vrt_path, vrt_path, projWin=(bounds[0], bounds[3], bounds[2], bounds[1]))
         # Close the dataset to flush to disk
+        with rasterio.open(aoi_vrt_path, "r") as src:
+            print("CRS:", src.crs)
+            print("Bounds:", src.bounds)
+            print("Transform:", src.transform)
         ds = None
         if ds is None:
             print(f"Prediction vrt dataset successfully created within bounds at {aoi_vrt_path}")
