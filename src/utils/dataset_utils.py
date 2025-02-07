@@ -33,7 +33,8 @@ def get_window(
             bounds[3] <= vrt_bounds.top  
         )
         
-        if not bounds_within_vrt : 
+        if not bounds_within_vrt :
+            print(f"no intersection betwween vrt and bounds : path {image_path}, bounds : {bounds}, vrt bounds {vrt_bounds}") 
             return np.array([])
 
         window = from_bounds(*bounds, transform=src.transform)
@@ -160,3 +161,37 @@ class SubsetSampler(Sampler):
 
     def __len__(self):
         return self.num_samples
+    
+def get_patch_bounds(bounds, patch_size, position):
+    if position not in {"bottom-left", "top-left", "top-right", "bottom-right"}:
+        raise ValueError("La position doit être 'bottom-left', 'top-left', 'top-right' ou 'bottom-right'.")
+
+    xmin, ymin, xmax, ymax = bounds
+
+    # Calcul de nouvelles bornes en fonction de la position
+    if position == "bottom-left":
+        x_start = xmin
+        y_start = ymin
+    elif position == "top-left":
+        x_start = xmin
+        y_start = ymax - patch_size
+    elif position == "top-right":
+        x_start = xmax - patch_size
+        y_start = ymax - patch_size
+    elif position == "bottom-right":
+        x_start = xmax - patch_size
+        y_start = ymin
+
+    # Calcul des coordonnées finales
+    x_end = x_start + patch_size
+    y_end = y_start + patch_size
+
+    # S'assurer que les bounds restent dans les limites globales
+    if x_start < xmin or y_start < ymin or x_end > xmax or y_end > ymax:
+        raise ValueError("Le patch dépasse les limites globales.")
+
+    return (x_start, y_start, x_end, y_end)
+
+
+
+

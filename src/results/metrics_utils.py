@@ -18,7 +18,6 @@ from scipy.ndimage import binary_dilation, binary_erosion
 from torchvision.utils import save_image
 import torch
 
-# from midar.ign.utils import get_window
 from shapely.geometry import box, mapping, shape
 from tqdm import tqdm
 
@@ -84,7 +83,7 @@ def mask_with_geometry(tif_path, geometry, output_tif_path, nodata=np.nan):
 def get_changes(
     image_1_path,
     image_2_path,
-    delta,
+    threshold,
     min_area=5000,
     bounds=None,
     scaling_factor_1=None,
@@ -92,6 +91,7 @@ def get_changes(
     classification_mask_path=None,
     classes_to_keep=[1, 2, 3, 4, 5, 6],
     resolution=None,
+    method_change="percentage",
 ):
     # Assuming both images have the same profile
     image_1, profile = get_window(
@@ -116,6 +116,12 @@ def get_changes(
     if scaling_factor_2:
         image_2 = image_2 * scaling_factor_2
 
+
+    min_diff = 0
+    max_diff = 40
+    image_1 = np.clip(image_1, min_diff, max_diff)
+    image_2 = np.clip(image_2, min_diff, max_diff)
+    
     image_1 = image_1.squeeze()
     image_2 = image_2.squeeze()
 
@@ -134,11 +140,22 @@ def get_changes(
                 image_2[mask == ix] = 0
 
     difference = image_2.astype(np.float32) - image_1.astype(np.float32)
-    changes = difference < delta
+
+    if method_change == "threshold" :
+        changes = difference < threshold
+
+    if method_change == "percentage" :
+        changes =  (image_2 / (image_1 + 1e-6))< threshold
+        #avoid the noise of tree less than 2 meters
+        changes[image_1 < 2] = False
+
+    if method_change == "treecover" :
+        binary_map_1 = image_1 > threshold
+        binary_map_2 = image_2 > threshold
+        changes = np.logical_and(binary_map_1, ~binary_map_2)
 
     size = 3
     # Apply morphology to filter out noise
-    print("Apply morphology")
     changes = binary_erosion(changes, structure=np.ones((size, size)))
     changes = binary_dilation(changes, structure=np.ones((size, size)), iterations=2)
     changes = binary_erosion(changes, structure=np.ones((size, size)))
@@ -189,12 +206,6 @@ def compute_tree_cover(tif_path, threshold, scaling_factor=None):
 
 
 def compute_change_metrics(mask1, mask2, difference_1, difference_2, resolution=1.5):
-    min_diff = -100
-    max_diff = 100
-
-    difference_1 = np.clip(difference_1, min_diff, max_diff)
-    difference_2 = np.clip(difference_2, min_diff, max_diff)
-
 
     tp = np.sum(np.logical_and(mask1, mask2))  # True positives
     # tn = np.sum(np.logical_and(~mask1, ~mask2))  # True negatives
@@ -283,13 +294,8 @@ def plot_detections(
     save_prefix="",
     year_1=2022,
     year_2=2023,
-    save_dir="./",
+    results_dir="./",
 ):
-
-    # Open one of the images to get the spatial context (bounds and CRS)
-    fig, axes = plt.subplots(3, 3, figsize=(10, 10))
-
-    
     image_1 = get_window(inputs_1_path, bounds=bounds)
     image_1 = image_1[[2,1,0],:,:].astype(np.float32)
     image_2 = get_window(inputs_2_path, bounds=bounds)
@@ -309,11 +315,12 @@ def plot_detections(
     cmap_diff = mcolors.LinearSegmentedColormap.from_list("custom_cmap", colors)
     norm = mcolors.TwoSlopeNorm(vmin=-20, vcenter=0, vmax=2)
 
-    vmin_label = min(metrics_out["height_1"].min(),metrics_out["height_2"].min())
-    vmax_label = max(metrics_out["height_1"].max(),metrics_out["height_2"].max())
-    vmin_pred = min(metrics_out["pred_1"].min(), metrics_out["pred_2"].min())
-    vmax_pred = max(metrics_out["pred_1"].max(), metrics_out["pred_2"].max())
-   
+    vmin = 0
+    vmax = 40
+
+    # Open one of the images to get the spatial context (bounds and CRS)
+    fig, axes = plt.subplots(3, 3, figsize=(10, 10))
+
     # Inputs
     axes[0, 0].imshow(image_1.transpose(1, 2, 0))
     axes[0, 0].set_title(f"Sentinel {year_1}")
@@ -328,11 +335,11 @@ def plot_detections(
     axes[0, 2].axis("off")  # Turn off the axis
 
     # Labels
-    axes[1, 0].imshow(metrics_out["height_1"], vmin=vmin_label, vmax=vmax_label, cmap="Greens")
+    axes[1, 0].imshow(metrics_out["height_1"], vmin=vmin, vmax=vmax, cmap="Greens")
     axes[1, 0].set_title(f"Lidar {year_1}")
     axes[1, 0].axis("off")  # Turn off the axis
 
-    axes[1, 1].imshow(metrics_out["height_2"], vmin=vmin_label, vmax=vmax_label, cmap="Greens")
+    axes[1, 1].imshow(metrics_out["height_2"], vmin=vmin, vmax=vmax, cmap="Greens")
     axes[1, 1].set_title(f"Lidar {year_2}")
     axes[1, 1].axis("off")  # Turn off the axis
 
@@ -342,11 +349,11 @@ def plot_detections(
     axes[1, 2].axis("off")  # Turn off the axis
 
     # Predictions
-    axes[2, 0].imshow(metrics_out["pred_1"], vmin=vmin_pred, vmax=vmax_pred, cmap="Greens")
+    axes[2, 0].imshow(metrics_out["pred_1"], vmin=vmin, vmax=vmax, cmap="Greens")
     axes[2, 0].set_title(f"Predictions {year_1}")
     axes[2, 0].axis("off")  # Turn off the axis
 
-    axes[2, 1].imshow(metrics_out["pred_2"], vmin=vmin_pred, vmax=vmax_pred, cmap="Greens")
+    axes[2, 1].imshow(metrics_out["pred_2"], vmin=vmin, vmax=vmax, cmap="Greens")
     axes[2, 1].set_title(f"Predictions {year_2}")
     axes[2, 1].axis("off")  # Turn off the axis
 
@@ -356,64 +363,64 @@ def plot_detections(
     axes[2, 2].axis("off")  # Turn off the axis
 
     fig.savefig(
-        os.path.join(save_dir, f"{save_prefix}_detection_images.jpg"), bbox_inches="tight", pad_inches=0
+        os.path.join(results_dir, f"{save_prefix}_detection_images.jpg"), bbox_inches="tight", pad_inches=0
     )
 
     # Save also individual figures for paper
-    save_dir_ind = os.path.join(save_dir, "individual_figures")
-    if not os.path.exists(save_dir_ind):
-        os.makedirs(save_dir_ind)
+    results_dir_ind = os.path.join(results_dir, "individual_figures")
+    if not os.path.exists(results_dir_ind):
+        os.makedirs(results_dir_ind)
 
     fig, ax = plt.subplots()
     plt.imshow(image_1.transpose(1, 2, 0))
     plt.axis("off")  # Turn off the axis
-    fig.savefig(os.path.join(save_dir_ind, f"{save_prefix}_spot_1.jpg"), bbox_inches="tight", pad_inches=0)
+    fig.savefig(os.path.join(results_dir_ind, f"{save_prefix}_spot_1.jpg"), bbox_inches="tight", pad_inches=0)
 
     plt.imshow(image_2.transpose(1, 2, 0))
     plt.axis("off")  # Turn off the axis
-    fig.savefig(os.path.join(save_dir_ind, f"{save_prefix}_spot_2.jpg"), bbox_inches="tight", pad_inches=0)
+    fig.savefig(os.path.join(results_dir_ind, f"{save_prefix}_spot_2.jpg"), bbox_inches="tight", pad_inches=0)
 
     plt.imshow(metrics_out["detection_lidar"], cmap="inferno")
     plt.axis("off")  # Turn off the axis
     fig.savefig(
-        os.path.join(save_dir_ind, f"{save_prefix}_detection_lidar.jpg"), bbox_inches="tight", pad_inches=0
+        os.path.join(results_dir_ind, f"{save_prefix}_detection_lidar.jpg"), bbox_inches="tight", pad_inches=0
     )
 
     plt.imshow(metrics_out["detection_pred"], cmap="inferno")
     plt.axis("off")  # Turn off the axis
     fig.savefig(
-        os.path.join(save_dir_ind, f"{save_prefix}_detection_pred.jpg"), bbox_inches="tight", pad_inches=0
+        os.path.join(results_dir_ind, f"{save_prefix}_detection_pred.jpg"), bbox_inches="tight", pad_inches=0
     )
 
     # Labels
-    plt.imshow(metrics_out["height_1"], vmin=vmin_label, vmax=vmax_label, cmap="Greens")
+    plt.imshow(metrics_out["height_1"], vmin=vmin, vmax=vmax, cmap="Greens")
     plt.axis("off")  # Turn off the axis
-    fig.savefig(os.path.join(save_dir_ind, f"{save_prefix}_lidar_1.jpg"), bbox_inches="tight", pad_inches=0)
+    fig.savefig(os.path.join(results_dir_ind, f"{save_prefix}_lidar_1.jpg"), bbox_inches="tight", pad_inches=0)
 
-    plt.imshow(metrics_out["height_2"], vmin=vmin_label, vmax=vmax_label, cmap="Greens")
+    plt.imshow(metrics_out["height_2"], vmin=vmin, vmax=vmax, cmap="Greens")
     plt.axis("off")  # Turn off the axis
-    fig.savefig(os.path.join(save_dir_ind, f"{save_prefix}_lidar_2.jpg"), bbox_inches="tight", pad_inches=0)
+    fig.savefig(os.path.join(results_dir_ind, f"{save_prefix}_lidar_2.jpg"), bbox_inches="tight", pad_inches=0)
 
     plt.imshow(metrics_out["difference"], cmap=cmap_diff, norm=norm)
     # plt.imshow(-metrics_out["difference"], vmin=vmin_diff, vmax=vmax_diff, cmap="inferno")
     plt.axis("off")  # Turn off the axis
     fig.savefig(
-        os.path.join(save_dir_ind, f"{save_prefix}_lidar_diff.jpg"), bbox_inches="tight", pad_inches=0
+        os.path.join(results_dir_ind, f"{save_prefix}_lidar_diff.jpg"), bbox_inches="tight", pad_inches=0
     )
 
     # Predictions
-    plt.imshow(metrics_out["pred_1"], vmin=vmin_pred, vmax=vmax_pred, cmap="Greens")
+    plt.imshow(metrics_out["pred_1"], vmin=vmin, vmax=vmax, cmap="Greens")
     plt.axis("off")  # Turn off the axis
-    fig.savefig(os.path.join(save_dir_ind, f"{save_prefix}_pred_1.jpg"), bbox_inches="tight", pad_inches=0)
+    fig.savefig(os.path.join(results_dir_ind, f"{save_prefix}_pred_1.jpg"), bbox_inches="tight", pad_inches=0)
 
-    plt.imshow(metrics_out["pred_2"], vmin=vmin_pred, vmax=vmax_pred, cmap="Greens")
+    plt.imshow(metrics_out["pred_2"], vmin=vmin, vmax=vmax, cmap="Greens")
     plt.axis("off")  # Turn off the axis
-    fig.savefig(os.path.join(save_dir_ind, f"{save_prefix}_pred_2.jpg"), bbox_inches="tight", pad_inches=0)
+    fig.savefig(os.path.join(results_dir_ind, f"{save_prefix}_pred_2.jpg"), bbox_inches="tight", pad_inches=0)
 
     plt.imshow(metrics_out["difference_pred"], cmap=cmap_diff, norm=norm)
     # plt.imshow(-metrics_out["difference_pred"], vmin=vmin_diff, vmax=vmax_diff, cmap="inferno")
     plt.axis("off")  # Turn off the axis
-    fig.savefig(os.path.join(save_dir_ind, f"{save_prefix}_diff_pred.jpg"), bbox_inches="tight", pad_inches=0)
+    fig.savefig(os.path.join(results_dir_ind, f"{save_prefix}_diff_pred.jpg"), bbox_inches="tight", pad_inches=0)
 
     # Plot metrics
     metrics_list = ["precision", "recall", "f1", "iou"]
@@ -438,12 +445,12 @@ def plot_detections(
     plt.yticks(fontsize=fs)
 
     fig.savefig(
-        os.path.join(save_dir, f"{save_prefix}_detection_metrics.jpg"), bbox_inches="tight", pad_inches=0
+        os.path.join(results_dir, f"{save_prefix}_detection_metrics.jpg"), bbox_inches="tight", pad_inches=0
     )
     plt.close("all")
 
 
-def extract_tif_from_bounds(reference_image, target_image, output_path, dtype=rasterio.uint16, crs=2154):
+def extract_tif_from_bounds(reference_image, target_image, output_path, crs=2154):
     # Get bounds (intersection)
     with rasterio.open(reference_image) as src:
         bounds = src.bounds
@@ -462,7 +469,6 @@ def extract_tif_from_bounds(reference_image, target_image, output_path, dtype=ra
                 "height": window_data.shape[1],
                 "width": window_data.shape[2],
                 "transform": src.window_transform(window),
-                "dtype": dtype,
                 "count": window_data.shape[0],
                 "crs": crs,
             }

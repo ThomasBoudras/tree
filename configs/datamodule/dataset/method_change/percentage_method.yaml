@@ -1,0 +1,3 @@
+_target_: src.datamodules.datasets.change_method.percentage_method
+threshold : 0.5
+min_height_tree: 2

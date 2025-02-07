@@ -157,6 +157,15 @@ class Module(LightningModule):
         # At predict time, there are (normally) only inputs, no targets
         input, meta_data = batch
         res = self(input, meta_data)
+        
+        if res.isnan().sum() != 0 :
+            raise Exception("predictions with nan")
+        
+        target_nb_pixel = meta_data["target_nb_pixel"]
+        if res.shape[-1] != target_nb_pixel :
+            scale_factor = target_nb_pixel.item() / res.shape[-1] 
+            res = F.interpolate(res, scale_factor=scale_factor, mode='bilinear', align_corners=False)
+
         if self.predictions_save_dir is not None:
             np.save(
                 os.path.join(self.predictions_save_dir, str(batch_idx) + ".npy"),

@@ -18,7 +18,7 @@ datamodule:
         persistent_workers: True
         max_n_inputs_for_moments_computation: 1000
         max_n_inputs_per_epoch : null
-        normalization_save_path: ${work_dir}/normalization_values_sentinel_1_2/
+        normalization_save_path: ${work_dir}/normalization_values_sentinel_1_2_cpm/
         patch_size_input: 64
         patch_size_target: 256
         batch_size: 8
@@ -31,7 +31,6 @@ datamodule:
         max_year: 2023
         input_resolution : 10
         target_resolution : 2.5
-        max_bounds_size: 650
 
 
 model:

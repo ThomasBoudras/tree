@@ -268,19 +268,13 @@ def predict_on_aoi(config: DictConfig) -> None:
                     sample_bounds[3] - config.crop_size
                     )
                 
-                print(f"initial pred {pred}")
                 # clip negative values to 0
                 pred = np.clip(pred, a_min=0, a_max=None)
-                print(f"2 pred {pred}")
                 pred = pred.squeeze().astype(np.uint16)
-                print(f"3 pred {pred}")
                 pred = pred[pixel_crop_size : -pixel_crop_size, pixel_crop_size : -pixel_crop_size]
-                print(f"4 pred {pred}")
-
                 height, width = pred.shape
 
                 transform = from_bounds(*sample_bounds, width, height)
-                print(f"bounds {sample_bounds}")
 
                 with rasterio.open(
                     output_path,
@@ -327,10 +321,6 @@ def predict_on_aoi(config: DictConfig) -> None:
         aoi_vrt_path = os.path.join(predictions_dir, f"{config.run_name}_{config.run_year}_pred_aoi.vrt")
         ds = gdal.Translate(aoi_vrt_path, vrt_path, projWin=(bounds[0], bounds[3], bounds[2], bounds[1]))
         # Close the dataset to flush to disk
-        with rasterio.open(aoi_vrt_path, "r") as src:
-            print("CRS:", src.crs)
-            print("Bounds:", src.bounds)
-            print("Transform:", src.transform)
         ds = None
         if ds is None:
             print(f"Prediction vrt dataset successfully created within bounds at {aoi_vrt_path}")

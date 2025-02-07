@@ -1,0 +1,2 @@
+_target_: src.datamodules.datasets.change_method.tree_cover_method
+threshold : 2

@@ -42,26 +42,78 @@ def create_fixed_size_bbox(geometry, width=300, height=300):
     return bounds
 
 
-def compute_change_metrics(cfg: DictConfig) -> None:
+# Compute metrics
+def get_metrics(cfg, bounds, threshold, min_area, method):
+    scaling_factor = {"m": 1, "dm": 0.1, "cm": 0.01}
+
+    height_1, height_2, difference, detection_lidar, gdf_filtered = get_changes(
+        cfg.labels_1.path,
+        cfg.labels_2.path,
+        threshold,
+        min_area=min_area,
+        bounds=bounds,
+        scaling_factor_1=scaling_factor[cfg.labels_1.unit],
+        scaling_factor_2=scaling_factor[cfg.labels_2.unit],
+        classification_mask_path=cfg.classification.path,
+        classes_to_keep=cfg.classes_to_keep,
+        resolution=cfg.resolution,
+        method_change=method,
+    )
+    pred_1, pred_2, difference_pred, detection_pred, gdf_filtered_pred = get_changes(
+        cfg.predictions_1.path,
+        cfg.predictions_2.path,
+        threshold,
+        min_area=min_area,
+        bounds=bounds,
+        scaling_factor_1=scaling_factor[cfg.predictions_1.unit],
+        scaling_factor_2=scaling_factor[cfg.predictions_2.unit],
+        classification_mask_path=cfg.classification.path,
+        classes_to_keep=cfg.classes_to_keep,
+        resolution=cfg.resolution,
+        method_change=method,
+    )
+    metrics = compute_change_metrics(
+        detection_lidar, detection_pred, difference, difference_pred, resolution=cfg.resolution
+    )
+
+    return {
+        "metrics": metrics,
+        "height_1": height_1,
+        "height_2": height_2,
+        "pred_1": pred_1,
+        "pred_2": pred_2,
+        "difference": difference,
+        "difference_pred": difference_pred,
+        "detection_lidar": detection_lidar,
+        "detection_pred": detection_pred,
+        "gdf_filtered": gdf_filtered,
+        "gdf_filtered_pred": gdf_filtered_pred,
+    }
+
+def compute_change_detections(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
 
     if not os.path.exists(cfg.save_dir):
         os.makedirs(cfg.save_dir)
-    if not os.path.exists(os.path.join(cfg.save_dir, "figures")):
-        os.makedirs(os.path.join(cfg.save_dir, "figures"))
-    else:
-        shutil.rmtree(os.path.join(cfg.save_dir, "figures"))
-        os.makedirs(os.path.join(cfg.save_dir, "figures"))
     if not os.path.exists(os.path.join(cfg.save_dir, "data")):
         os.makedirs(os.path.join(cfg.save_dir, "data"))
 
+    if not os.path.exists(cfg.results_dir):
+        os.makedirs(cfg.results_dir)
+    for method in cfg.threshold_list :
+        if not os.path.exists(os.path.join(cfg.results_dir, f"figures_{method}")):
+            os.makedirs(os.path.join(cfg.results_dir, f"figures_{method}"))
+        else:
+            shutil.rmtree(os.path.join(cfg.results_dir, f"figures_{method}"))
+            os.makedirs(os.path.join(cfg.results_dir, f"figures_{method}"))
+    if not os.path.exists(os.path.join(cfg.results_dir, "data")):
+        os.makedirs(os.path.join(cfg.results_dir, "data"))
+
     # save the config next to the data
-    OmegaConf.save(cfg, os.path.join(cfg.save_dir, "compute_metrics_config.yaml"))
+    OmegaConf.save(cfg, os.path.join(cfg.results_dir, "compute_metrics_config.yaml"))
 
     # Load predictions and labels, mask on available labels (either labels_1 or labels_2,
     # not both as we suppose one of them is lidarHD, hence available everywhere)
-
-    scaling_factor = {"m": 1, "dm": 0.1, "cm": 0.01}
 
     image_to_mask_path = None
     if cfg.labels_1.mask_on:
@@ -82,40 +134,40 @@ def compute_change_metrics(cfg: DictConfig) -> None:
         output_path = os.path.join(cfg.save_dir, "data", f"{image_to_get_mask_from_name}.tif")
         shutil.copy(image_to_get_mask_from_path, output_path)
 
+        output_path = os.path.join(cfg.save_dir, "data", f"{image_to_mask_name}.tif")
+        extract_tif_from_bounds(reference_image_path, image_to_mask_path, output_path)
+        image_to_mask_path = output_path
+
         output_path = os.path.join(cfg.save_dir, "data", f"inputs_{1}.tif")
-        extract_tif_from_bounds(reference_image_path, cfg.inputs_1.path, output_path, dtype=rasterio.uint8)
+        extract_tif_from_bounds(reference_image_path, cfg.inputs_1.path, output_path)
         cfg.inputs_1.path = output_path
 
         output_path = os.path.join(cfg.save_dir, "data", f"inputs_{2}.tif")
-        extract_tif_from_bounds(reference_image_path, cfg.inputs_2.path, output_path, dtype=rasterio.uint8)
+        extract_tif_from_bounds(reference_image_path, cfg.inputs_2.path, output_path)
         cfg.inputs_2.path = output_path
-
-        output_path = os.path.join(cfg.save_dir, "data", f"{image_to_mask_name}.tif")
-        extract_tif_from_bounds(reference_image_path, image_to_mask_path, output_path, dtype=rasterio.uint16)
-        image_to_mask_path = output_path
 
         output_path = os.path.join(cfg.save_dir, "data", "classification.tif")
         extract_tif_from_bounds(
-            reference_image_path, cfg.classification.path, output_path, dtype=rasterio.uint8
+            reference_image_path, cfg.classification.path, output_path
         )
         cfg.classification.path = output_path
 
-        output_path = os.path.join(cfg.save_dir, "data", f"predictions_{1}.tif")
+        output_path = os.path.join(cfg.results_dir, "data", f"predictions_{1}.tif")
         extract_tif_from_bounds(
-            reference_image_path, cfg.predictions_1.path, output_path, dtype=rasterio.uint16
+            reference_image_path, cfg.predictions_1.path, output_path
         )
         cfg.predictions_1.path = output_path
 
         if cfg.predictions_2.path is not None:
             # handle special case when only loss is available and given as image_1
-            output_path = os.path.join(cfg.save_dir, "data", f"predictions_{2}.tif")
+            output_path = os.path.join(cfg.results_dir, "data", f"predictions_{2}.tif")
             extract_tif_from_bounds(
-                reference_image_path, cfg.predictions_2.path, output_path, dtype=rasterio.uint16
+                reference_image_path, cfg.predictions_2.path, output_path
             )
             cfg.predictions_2.path = output_path
 
         if image_to_mask_path is not None:
-            mask_plot_path = os.path.join(cfg.save_dir, "figures", "mask")
+            mask_plot_path = os.path.join(cfg.save_dir, "data", "mask")
             mask_gdf = get_mask(
                 image_to_get_mask_from_path, min_area=1000000, plot=True, plot_path=mask_plot_path, crs=2154
             )
@@ -145,20 +197,20 @@ def compute_change_metrics(cfg: DictConfig) -> None:
                 )
                 mask_gdf.boundary.plot(ax=axes, edgecolor="red", linewidth=2)
             fig.savefig(
-                os.path.join(cfg.save_dir, "figures", f"masked_{image_to_mask_name}"),
+                os.path.join(cfg.save_dir, "data", f"masked_{image_to_mask_name}"),
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close("all")
 
             # Mask predictions
-            output_tif_path = os.path.join(cfg.save_dir, "data", "masked_predictions_1.tif")
+            output_tif_path = os.path.join(cfg.results_dir, "data", "masked_predictions_1.tif")
             mask_with_geometry(
                 cfg.predictions_1.path, mask_gdf["geometry"].iloc[0], output_tif_path, nodata=0
             )
             cfg.predictions_1.path = output_tif_path
             if cfg.predictions_2.path is not None:
-                output_tif_path = os.path.join(cfg.save_dir, "data", "masked_predictions_2.tif")
+                output_tif_path = os.path.join(cfg.results_dir, "data", "masked_predictions_2.tif")
                 mask_with_geometry(
                     cfg.predictions_2.path,
                     mask_gdf["geometry"].iloc[0],
@@ -171,125 +223,81 @@ def compute_change_metrics(cfg: DictConfig) -> None:
         bounds = src.bounds
 
     # Compute metrics
-    def get_metrics(bounds, delta, min_area):
 
-        height_1, height_2, difference, detection_lidar, gdf_filtered = get_changes(
-            cfg.labels_1.path,
-            cfg.labels_2.path,
-            delta,
-            min_area=min_area,
-            bounds=bounds,
-            scaling_factor_1=scaling_factor[cfg.labels_1.unit],
-            scaling_factor_2=scaling_factor[cfg.labels_2.unit],
-            classification_mask_path=cfg.classification.path,
-            classes_to_keep=cfg.classes_to_keep,
-            resolution=cfg.resolution,
+    
+    
+    for method in tqdm(cfg.threshold_list , desc=f"Computing metrics"):
+        change_metrics = []
+        for threshold in tqdm(cfg.threshold_list[method], desc=f"Computing metrics for threshold in {cfg.threshold_list[method]}"):
+            res = []
+            for min_area in tqdm(
+                cfg.min_area_list, desc=f"Computing metrics for min_area in {cfg.min_area_list}"
+            ):
+                metrics_out = get_metrics(cfg, bounds, threshold, min_area, method)
+                res.append(metrics_out["metrics"])
+            change_metrics.append(res)
+
+        change_metrics = pd.DataFrame(change_metrics, index=cfg.threshold_list[method], columns=cfg.min_area_list)
+
+        # Save to Excel file
+        output_excel_path = os.path.join(cfg.results_dir, f"{cfg.model}_{method}_change_metrics.xlsx")
+        dataframes = [
+            ("Min difference (row) and min_area (column)", change_metrics),
+        ]
+        # Create a Pandas Excel writer using openpyxl as the engine
+        with pd.ExcelWriter(output_excel_path, engine="openpyxl") as writer:
+            start_row = 0
+            for metric_name in metrics_out["metrics"].keys():
+                # Write one table for each metric (f1, precision, recall, iou...)
+                start_col = 0
+                for title, df in dataframes:
+                    df_metric = df.map(lambda x: x[metric_name])
+                    # Write the title
+                    worksheet = (
+                        writer.sheets["Sheet1"]
+                        if "Sheet1" in writer.sheets
+                        else writer.book.create_sheet("Sheet1")
+                    )
+                    worksheet.cell(row=start_row + 1, column=start_col + 1, value=metric_name + " " + title)
+
+                    # Write the DataFrame
+                    df_metric.to_excel(
+                        writer, startrow=start_row + 1, startcol=start_col, index=True, header=True
+                    )
+                    start_col += df.shape[1] + 3
+                start_row += 4 + len(cfg.threshold_list[method])
+
+        print(f"Metrics saved to {output_excel_path}")
+
+        # Plot screen shots of changes
+        # Take large threshold  and min area to restrict the number of figures to plot
+        metrics_out = get_metrics(cfg, bounds, cfg.threshold_fig[method], 200, method)
+        n_change_geometries = metrics_out["gdf_filtered"].shape[0]
+        print(
+            f"There are {n_change_geometries} lidar change geometries for threshold "
+            f"{cfg.threshold_fig[method]} and min_area {200}. Plotting them with threshold {cfg.threshold_fig[method]} and min_area {cfg.min_area_fig}."
         )
-        pred_1, pred_2, difference_pred, detection_pred, gdf_filtered_pred = get_changes(
-            cfg.predictions_1.path,
-            cfg.predictions_2.path,
-            delta,
-            min_area=min_area,
-            bounds=bounds,
-            scaling_factor_1=scaling_factor[cfg.predictions_1.unit],
-            scaling_factor_2=scaling_factor[cfg.predictions_2.unit],
-            classification_mask_path=cfg.classification.path,
-            classes_to_keep=cfg.classes_to_keep,
-            resolution=cfg.resolution,
-        )
-        metrics = compute_change_metrics(
-            detection_lidar, detection_pred, difference, difference_pred, resolution=cfg.resolution
-        )
+        for ix_change in tqdm(range(min(n_change_geometries, 50)), desc="Plotting change geometries and metrics"):
+            # Plot for min threshold / min min_area
+            # Get the fixed size bounding box centered on the geometry
+            geometry = metrics_out["gdf_filtered"]["geometry"].iloc[ix_change]
+            sub_bounds = create_fixed_size_bbox(geometry, width=300, height=300)
 
-        return {
-            "metrics": metrics,
-            "height_1": height_1,
-            "height_2": height_2,
-            "pred_1": pred_1,
-            "pred_2": pred_2,
-            "difference": difference,
-            "difference_pred": difference_pred,
-            "detection_lidar": detection_lidar,
-            "detection_pred": detection_pred,
-            "gdf_filtered": gdf_filtered,
-            "gdf_filtered_pred": gdf_filtered_pred,
-        }
+            metrics_out_ix = get_metrics(cfg, sub_bounds, cfg.threshold_fig[method], cfg.min_area_fig, method)
 
-    # Compute metrics
+            save_prefix = str(ix_change)
 
-    change_metrics = []
-
-    for delta in tqdm(cfg.delta_list, desc=f"Computing metrics for delta in {cfg.delta_list}"):
-        res = []
-        for min_area in tqdm(
-            cfg.min_area_list, desc=f"Computing metrics for min_area in {cfg.min_area_list}"
-        ):
-            metrics_out = get_metrics(bounds, delta, min_area)
-            res.append(metrics_out["metrics"])
-        change_metrics.append(res)
-
-    change_metrics = pd.DataFrame(change_metrics, index=cfg.delta_list, columns=cfg.min_area_list)
-
-    # Save to Excel file
-    output_excel_path = os.path.join(cfg.save_dir, "change_metrics.xlsx")
-    dataframes = [
-        ("Min difference (row) and min_area (column)", change_metrics),
-    ]
-    # Create a Pandas Excel writer using openpyxl as the engine
-    with pd.ExcelWriter(output_excel_path, engine="openpyxl") as writer:
-        start_row = 0
-        for metric_name in metrics_out["metrics"].keys():
-            # Write one table for each metric (f1, precision, recall, iou...)
-            start_col = 0
-            for title, df in dataframes:
-                df_metric = df.map(lambda x: x[metric_name])
-                # Write the title
-                worksheet = (
-                    writer.sheets["Sheet1"]
-                    if "Sheet1" in writer.sheets
-                    else writer.book.create_sheet("Sheet1")
-                )
-                worksheet.cell(row=start_row + 1, column=start_col + 1, value=metric_name + " " + title)
-
-                # Write the DataFrame
-                df_metric.to_excel(
-                    writer, startrow=start_row + 1, startcol=start_col, index=True, header=True
-                )
-                start_col += df.shape[1] + 3
-            start_row += 4 + len(cfg.delta_list)
-
-    print(f"Metrics saved to {output_excel_path}")
-
-    # Plot screen shots of disturbances
-    # Take large delta  and min area to restrict the number of figures to plot
-    metrics_out = get_metrics(bounds, -15, 200)
-    n_change_geometries = metrics_out["gdf_filtered"].shape[0]
-    print(
-        f"There are {n_change_geometries} lidar change geometries for delta "
-        f"{15} and min_area {200}. Plotting them with delta {cfg.delta_fig} and min_area {cfg.min_area_fig}."
-    )
-    for ix_change in tqdm(range(n_change_geometries), desc="Plotting change geometries and metrics"):
-        # Plot for min delta / min min_area
-        # Get the fixed size bounding box centered on the geometry
-        geometry = metrics_out["gdf_filtered"]["geometry"].iloc[ix_change]
-        sub_bounds = create_fixed_size_bbox(geometry, width=300, height=300)
-
-        metrics_out_ix = get_metrics(sub_bounds, cfg.delta_fig, cfg.min_area_fig)
-
-        save_prefix = str(ix_change)
-
-        plot_detections(
-            cfg.inputs_1.path,
-            cfg.inputs_2.path,
-            sub_bounds,
-            metrics_out_ix,
-            fs=9,
-            save_prefix=save_prefix,
-            year_1=cfg.year_1,
-            year_2=cfg.year_2,
-            save_dir=os.path.join(cfg.save_dir, "figures"),
-        )
+            plot_detections(
+                cfg.inputs_1.path,
+                cfg.inputs_2.path,
+                sub_bounds,
+                metrics_out_ix,
+                fs=9,
+                save_prefix=save_prefix,
+                year_1=cfg.year_1,
+                year_2=cfg.year_2,
+                results_dir=os.path.join(cfg.results_dir, f"figures_{method}"),
+            )
 
 
-if __name__ == "__main__":
-    main()
+

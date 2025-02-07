@@ -1,0 +1,10 @@
+defaults:
+  - regression: UNet
+  - super_resolution: EDSR
+  - _self_
+
+
+instance:
+  _target_: src.models.networks.end_2_end_classification.end2EndClassificationNetwork
+  regression_model: ${model.network.regression}
+  super_resolution_model: ${model.network.super_resolution}

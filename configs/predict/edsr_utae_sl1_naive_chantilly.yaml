@@ -13,7 +13,6 @@ print_config: true
 aoi_name: Chantilly
 project : "tree_predictions"
 run_year: "2022"
-reference_date : "20220215"
 
 data_dir: /work/data
 input_path :  ${data_dir}/sentinel/timeseries/chantilly/${run_year}
@@ -27,7 +26,7 @@ aoi_path: null  # path to a shapefile (any file that can be read by geopandas.re
 split: test # select "test" tiles from "split" column (if aoi_path is not null)
 lidar_year: null # select "tiles" from "lidar_year" column that match lidar_year (if aoi_path is not null)
 
-normalization_constants_path: ${work_dir}/normalization_values_sentinel_1_2/  # FIXME put null for recent models, avoid this normalization_constants_path
+normalization_constants_path: ${work_dir}/normalization_values_sentinel_1_2_cpm/  # FIXME put null for recent models, avoid this normalization_constants_path
 save_dir: ${log_dir}/predictions
 
 patch_size: 3000
@@ -43,18 +42,17 @@ dataset :
   vrt_path_base: ${input_path}
   patch_size: ${patch_size}
   crop_size: ${crop_size}
-  resolution : ${input_resolution}
-  reference_date : ${reference_date}
+  input_resolution : ${input_resolution}
+  target_resolution : ${target_resolution}
+  reference_year: ${run_year}
   nb_timeseries_image : 8 
   duplication_level_noise : 80
 
 trainer:
-  accelerator: auto
-  devices: 1
+  accelerator: gpu
   # strategy: ddp
   num_nodes: 1
-  deterministic: True
-  precision: 16-mixed
+  strategy: auto
 
 model:
   instance:

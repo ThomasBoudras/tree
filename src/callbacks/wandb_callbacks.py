@@ -1,12 +1,13 @@
 import subprocess
 from pathlib import Path
-
+import matplotlib.colors as mcolors
 import torch
 import wandb
 from lightning.pytorch import Callback, Trainer
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.utilities import rank_zero_only
 from torchvision.utils import make_grid
+from matplotlib import cm
 
 def get_wandb_logger(trainer: Trainer) -> WandbLogger:
     """Safely get Weights&Biases logger from Trainer."""
@@ -129,11 +130,14 @@ class LogImagePredictions(Callback):
         https://wandb.ai/wandb/wandb-lightning/reports/Image-Classification-using-PyTorch-Lightning--VmlldzoyODk1NzY
     """
 
-    def __init__(self, num_samples: int, freq_train):
+    def __init__(self, num_samples: int, freq_train, min_value_normalization, max_value_normalization, mode):
         super().__init__()
         self.num_samples = num_samples
         self.ready = True
         self.freq_train = freq_train
+        self.min_value_normalization = min_value_normalization
+        self.max_value_normalization = max_value_normalization
+        self.mode = mode
 
     def on_sanity_check_start(self, trainer, pl_module):
         self.ready = False
@@ -176,10 +180,27 @@ class LogImagePredictions(Callback):
             for i, pred in enumerate(preds) :
                 pred_image = pred
                 target_image = targets[i]
-                pred_image, target_image = self._normalize_pred_and_target_with_target(pred_tensor=pred_image, target_tensor=target_image)
 
-                target_image = self._color_transform(target_image)
-                pred_image = self._color_transform(pred_image)
+                if self.mode == "height" :
+                    pred_image, target_image = self._normalize_pred_and_target(pred_tensor=pred_image, target_tensor=target_image)
+                    target_image = self._color_transform(target_image)
+                    pred_image = self._color_transform(pred_image)
+
+                elif self.mode == "difference" : 
+                    norm = mcolors.TwoSlopeNorm(vmin=self.min_value_normalization, vcenter=0, vmax=self.max_value_normalization)
+                    pred_image = norm(pred_image.cpu().numpy())
+                    target_image = norm(target_image.cpu().numpy())
+                    colormap = cm.get_cmap("RdYlGn")
+                    pred_image = colormap(pred_image)
+                    pred_image = torch.from_numpy(pred_image).squeeze(0).permute(2, 0, 1)
+                    target_image = colormap(target_image)
+                    target_image = torch.from_numpy(target_image).squeeze(0).permute(2, 0, 1)
+                    pred_image = pred_image[:3, :, :]
+                    target_image = target_image[:3, :, :]
+                
+                elif self.mode == "change" :
+                    target_image = target_image.float()
+
 
                 target_images.append(target_image)
                 pred_images.append(pred_image)
@@ -219,13 +240,9 @@ class LogImagePredictions(Callback):
                 
 
 
-    def _normalize_pred_and_target_with_target(self, pred_tensor, target_tensor):
-        target_min = target_tensor.min()
-        target_max = target_tensor.max()
-
-        # Évite la division par zéro en cas où target_max == target_min
-        normalized_pred = (pred_tensor - target_min) / (target_max - target_min + 1e-8)
-        normalized_target = (target_tensor -target_min) / (target_max - target_min + 1e-8)
+    def _normalize_pred_and_target(self, pred_tensor, target_tensor,):
+        normalized_pred = (pred_tensor - self.min_value_normalization) / (self.max_value_normalization - self.min_value_normalization)
+        normalized_target = (target_tensor - self.min_value_normalization) / (self.max_value_normalization - self.min_value_normalization)
         
         # Clamp pour s'assurer que les valeurs sont entre 0 et 1
         normalized_pred = normalized_pred.clamp(0, 1)

@@ -1,0 +1,57 @@
+defaults :
+  - method_change : threshold_method
+
+input_path: ./
+target_path: ./
+geometries_path: ./
+replace_nan_by_zero_in_target: False
+target_resolution: 2.5
+input_resolution: 10
+nb_timeseries_image: 8
+duplication_level_noise : null
+proportion_change : 0.7
+
+train_dataset: 
+  _target_: src.datamodules.datasets.change_timeseries_sentinel_dataset.sentinelDataset
+  input_path: ${datamodule.dataset.input_path} 
+  target_path: ${datamodule.dataset.target_path}
+  replace_nan_by_zero_in_target: ${datamodule.dataset.replace_nan_by_zero_in_target} 
+  target_resolution: ${datamodule.dataset.target_resolution}
+  input_resolution: ${datamodule.dataset.input_resolution}  
+  nb_timeseries_image: ${datamodule.dataset.nb_timeseries_image}
+  patch_size_input: ${datamodule.instance.patch_size_input}
+  duplication_level_noise: ${datamodule.dataset.duplication_level_noise}
+  method_change : ${datamodule.dataset.method_change}
+  proportion_change: ${datamodule.dataset.proportion_change} 
+  geometries_path: ${datamodule.dataset.geometries_path} 
+  split: train
+
+val_dataset:
+  _target_: src.datamodules.datasets.change_timeseries_sentinel_dataset.sentinelDataset
+  input_path: ${datamodule.dataset.input_path} 
+  target_path: ${datamodule.dataset.target_path}
+  replace_nan_by_zero_in_target: ${datamodule.dataset.replace_nan_by_zero_in_target} 
+  target_resolution: ${datamodule.dataset.target_resolution}
+  input_resolution: ${datamodule.dataset.input_resolution}  
+  nb_timeseries_image: ${datamodule.dataset.nb_timeseries_image}
+  patch_size_input: ${datamodule.instance.patch_size_input}
+  duplication_level_noise: ${datamodule.dataset.duplication_level_noise}
+  method_change : ${datamodule.dataset.method_change}
+  proportion_change: ${datamodule.dataset.proportion_change} 
+  geometries_path: ${datamodule.dataset.geometries_path} 
+  split: val
+
+test_dataset:
+  _target_: src.datamodules.datasets.change_timeseries_sentinel_dataset.sentinelDataset
+  input_path: ${datamodule.dataset.input_path} 
+  target_path: ${datamodule.dataset.target_path}
+  replace_nan_by_zero_in_target: ${datamodule.dataset.replace_nan_by_zero_in_target} 
+  target_resolution: ${datamodule.dataset.target_resolution}
+  input_resolution: ${datamodule.dataset.input_resolution}  
+  nb_timeseries_image: ${datamodule.dataset.nb_timeseries_image}
+  patch_size_input: ${datamodule.instance.patch_size_input}
+  duplication_level_noise: ${datamodule.dataset.duplication_level_noise}
+  method_change : ${datamodule.dataset.method_change}
+  proportion_change: ${datamodule.dataset.proportion_change} 
+  geometries_path: ${datamodule.dataset.geometries_path} 
+  split: test

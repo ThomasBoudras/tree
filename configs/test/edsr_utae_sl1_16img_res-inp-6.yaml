@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+    - override /experiment: edsr_utae_sl1_16img_res-inp-6
+
+project : tree_test
+only_test : true
+ckpt_path : ${work_dir}/logs/tree/EDSR_UTAE_SL1_16img_res-inp-6/v1_EDSR_UTAE_SL1_16img_res-inp-6/best_checkpoints/epoch_015.ckpt
+datamodule :
+    instance :
+        patch_size_input: 100
+        patch_size_target: 400
+        duplication_level_noise: null
+    
+    dataset : 
+        input_resolution : 6
+        target_resolution : 1.5

@@ -13,4 +13,3 @@ datamodule :
     dataset : 
         input_resolution : 2.5
         target_resolution : 1.5
-        max_bounds_size: 620

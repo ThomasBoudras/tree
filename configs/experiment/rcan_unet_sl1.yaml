@@ -5,7 +5,7 @@ defaults:
 seed: 12345
 project : "tree"
 run_name: RCAN_UNet_SL1
-run_version: v3_${run_name}
+run_version: v4_${run_name}
 data_dir: /work/data
 ckpt_path : null
 load_just_weights: False
@@ -16,7 +16,7 @@ datamodule:
         persistent_workers: True
         max_n_inputs_for_moments_computation: 1000
         max_n_inputs_per_epoch : null
-        normalization_save_path: ${work_dir}/normalization_values_sentinel_1_2/
+        normalization_save_path: ${work_dir}/normalization_values_sentinel_1_2_cpm/
         patch_size_input: 64
         patch_size_target: 256
         batch_size: 8

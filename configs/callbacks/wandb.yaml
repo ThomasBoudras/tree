@@ -14,3 +14,6 @@ log_image_predictions:
     _target_: src.callbacks.wandb_callbacks.LogImagePredictions
     num_samples: 8
     freq_train : null
+    min_value_normalization: 0
+    max_value_normalization: 40
+    mode : "height"

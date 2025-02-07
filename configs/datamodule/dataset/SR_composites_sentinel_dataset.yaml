@@ -10,10 +10,9 @@ min_year: 2021
 max_year: 2023
 target_resolution: 2.5
 input_resolution: 10
-max_bounds_size : 1000
 
 train_dataset:
-  _target_: src.datamodules.datasets.composites_sentinel_dataset.sentinelDataset
+  _target_: src.datamodules.datasets.SR_composites_sentinel_dataset.sentinelDataset
   input_sources: ${datamodule.dataset.input_sources} 
   input_path: ${datamodule.dataset.input_path} 
   target_path: ${datamodule.dataset.target_path}
@@ -28,7 +27,7 @@ train_dataset:
   split: train
 
 val_dataset:
-  _target_: src.datamodules.datasets.composites_sentinel_dataset.sentinelDataset
+  _target_: src.datamodules.datasets.SR_composites_sentinel_dataset.sentinelDataset
   input_sources: ${datamodule.dataset.input_sources} 
   input_path: ${datamodule.dataset.input_path} 
   target_path: ${datamodule.dataset.target_path}
@@ -43,7 +42,7 @@ val_dataset:
   split: val
 
 test_dataset:
-  _target_: src.datamodules.datasets.composites_sentinel_dataset.sentinelDataset
+  _target_: src.datamodules.datasets.SR_composites_sentinel_dataset.sentinelDataset
   input_sources: ${datamodule.dataset.input_sources} 
   input_path: ${datamodule.dataset.input_path} 
   target_path: ${datamodule.dataset.target_path}

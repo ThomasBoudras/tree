@@ -32,7 +32,6 @@ datamodule:
         target_resolution : 2.5
         nb_timeseries_image: 16
         duplication_level_noise: 80
-        max_bounds_size: 330
 
 
 model:

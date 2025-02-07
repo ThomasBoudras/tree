@@ -68,7 +68,8 @@ class GridDataset(Dataset):
         patch_size, 
         crop_size, 
         transform=None, 
-        resolution=None, 
+        input_resolution=None, 
+        target_resolution=None,
         aoi_gdf=None
     ):
         s2_vrt_path = os.path.join(vrt_path_base, f"s2/s2_EPSG2154.vrt")
@@ -83,11 +84,12 @@ class GridDataset(Dataset):
         self.crop_size = crop_size  # equivalent to stride of 2*crop_size
         # tansform refers here to the transformation of the input, not the projection
         self.transform = transform
+        self.target_resolution =target_resolution
         with rasterio.open(s2_vrt_path) as src:
-            if resolution is None:
-                self.resolution = src.transform.a
+            if input_resolution is None:
+                self.input_resolution = src.transform.a
             else:
-                self.resolution = resolution
+                self.input_resolution = input_resolution
 
             if aoi_gdf is not None:
                 bounds_list = list(aoi_gdf.bounds.itertuples(index=False, name=None))
@@ -118,14 +120,15 @@ class GridDataset(Dataset):
         for source in ["s2", "s1"] :
             source_vrt_path = os.path.join(self.vrt_path_base, source, f"{source}_EPSG2154.vrt")
             
-            input_source = get_window(source_vrt_path, bounds=bounds, resolution=self.resolution)
+            input_source = get_window(source_vrt_path, bounds=bounds, resolution=self.input_resolution)
             input_source = input_source.astype(np.float32).transpose(1, 2, 0)
-            input_source[np.isneginf(input_source)] = 0
+            input_source[~np.isfinite(input_source)] = 0
             input.append(input_source)
         input = np.concatenate(input, axis=2)
 
         if self.transform:
             input = self.transform(input)
-        
-        meta_data =  {}
+
+        target_nb_pixel = int((bounds[3] - bounds[1])/self.target_resolution)
+        meta_data =  {"target_nb_pixel" : target_nb_pixel}
         return input, meta_data

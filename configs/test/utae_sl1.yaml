@@ -9,8 +9,8 @@ datamodule :
     instance :
         patch_size_input: 240
         patch_size_target: 400
+        duplication_level_noise: null
     
     dataset : 
         input_resolution : 2.5
         target_resolution : 1.5
-        max_bounds_size: 620

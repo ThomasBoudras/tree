@@ -11,7 +11,7 @@ nb_timeseries_image: 8
 duplication_level_noise : null
 
 train_dataset:
-  _target_: src.datamodules.datasets.SR_composites_sentinel_dataset.sentinelDataset
+  _target_: src.datamodules.datasets.SR_timeseries_sentinel_dataset.sentinelDataset
   input_path: ${datamodule.dataset.input_path} 
   target_path: ${datamodule.dataset.target_path}
   target_unit: ${datamodule.dataset.target_unit} 
@@ -27,7 +27,7 @@ train_dataset:
   split: train
 
 val_dataset:
-  _target_: src.datamodules.datasets.SR_composites_sentinel_dataset.sentinelDataset
+  _target_: src.datamodules.datasets.SR_timeseries_sentinel_dataset.sentinelDataset
   input_path: ${datamodule.dataset.input_path} 
   target_path: ${datamodule.dataset.target_path}
   target_unit: ${datamodule.dataset.target_unit} 
@@ -43,7 +43,7 @@ val_dataset:
   split: val
 
 test_dataset:
-  _target_: src.datamodules.datasets.SR_composites_sentinel_dataset.sentinelDataset
+  _target_: src.datamodules.datasets.SR_timeseries_sentinel_dataset.sentinelDataset
   input_path: ${datamodule.dataset.input_path} 
   target_path: ${datamodule.dataset.target_path}
   target_unit: ${datamodule.dataset.target_unit} 

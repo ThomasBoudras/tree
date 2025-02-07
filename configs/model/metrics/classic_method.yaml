@@ -1,5 +1,5 @@
 defaults:
-  - metric_calculator : classic_metrics
+  - metric_calculator : height_metrics
 
 
 forest_mask_path : ./

@@ -1,0 +1,15 @@
+# @package _global_
+defaults:
+    - override /experiment: rcan_unet_sl1
+
+project : tree_test
+only_test : true
+ckpt_path : ${work_dir}/logs/tree/RCAN_UNet_SL1/v4_RCAN_UNet_SL1/best_checkpoints/epoch_045.ckpt
+datamodule :
+    instance :
+        patch_size_input: 60
+        patch_size_target: 400
+    
+    dataset : 
+        input_resolution : 10
+        target_resolution : 1.5

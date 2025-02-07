@@ -2,9 +2,10 @@
 
 defaults:
   - override /experiment: edsr_utae_sl1_16img
-  - override /datamodule: null
+  - override /datamodule/dataset: null
   - override /callbacks: null
   - override /model/metrics: null
+
 
 seed: 12345 
 print_config: true
@@ -15,7 +16,7 @@ run_year: "2023"
 
 data_dir: /work/data
 input_path : ${data_dir}/sentinel/timeseries/chantilly/${run_year}
-ckpt_path : null
+ckpt_path : ${work_dir}/logs/tree/EDSR_UTAE_SL1_16img/v4_EDSR_UTAE_SL1_16img/best_checkpoints/epoch_057.ckpt
 load_just_weights: True
 
 # Chantilly changes predictions area 
@@ -41,17 +42,17 @@ dataset :
   vrt_path_base: ${input_path}
   patch_size: ${patch_size}
   crop_size: ${crop_size}
-  resolution : ${input_resolution}
-  reference_date: "202"
-
+  input_resolution : ${input_resolution}
+  target_resolution : ${target_resolution}
+  reference_year: ${run_year}
+  nb_timeseries_image : 16
+  duplication_level_noise : 80
 
 trainer:
-  accelerator: auto
-  devices: 1
+  accelerator: gpu
   # strategy: ddp
   num_nodes: 1
-  deterministic: True
-  precision: 16-mixed
+  strategy: auto
 
 model:
   instance:

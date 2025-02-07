@@ -1,0 +1,3 @@
+_target_: src.models.metrics.metrics.height_metrics
+tree_cover_threshold: 2
+bins: ${model.metrics.bins}

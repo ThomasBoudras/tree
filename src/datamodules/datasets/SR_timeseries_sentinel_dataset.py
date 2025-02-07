@@ -92,6 +92,19 @@ class sentinelDataset(Dataset):
         )
         
         return closest_n
+    
+    def custom_collate_fn(self, batch):
+        input = [item[0] for item in batch]  
+        target = [item[1] for item in batch]  
+        meta_data = [item[2] for item in batch] 
+
+        batch_input = torch.stack(input, dim=0)
+        batch_target = torch.stack(target, dim=0)
+
+        batch_meta_data = {key: torch.stack([d[key] for d in meta_data], dim=0) for key in meta_data[0]}
+
+        return batch_input, batch_target, batch_meta_data
+
 
     def __getitem__(self, ix):
 
@@ -177,15 +190,4 @@ class sentinelDataset(Dataset):
 
         return input, target, meta_data
     
-    def custom_collate_fn(self, batch):
-        input = [item[0] for item in batch]  
-        target = [item[1] for item in batch]  
-        meta_data = [item[2] for item in batch] 
-
-        batch_input = torch.stack(input, dim=0)
-        batch_target = torch.stack(target, dim=0)
-
-        batch_meta_data = {key: torch.stack([d[key] for d in meta_data], dim=0) for key in meta_data[0]}
-
-        return batch_input, batch_target, batch_meta_data
-
+    

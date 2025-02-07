@@ -8,6 +8,7 @@ from datetime import datetime
 import os
 from src.utils.dataset_utils import get_window
 import torch 
+import logging
 
 def get_grid(patch_size, crop_size, global_bounds):
     patch_bounds = []
@@ -72,9 +73,10 @@ class GridDataset(Dataset):
         patch_size, 
         crop_size, 
         transform=None, 
-        resolution=None, 
+        input_resolution=None, 
+        target_resolution = None,
         aoi_gdf=None,
-        reference_date= None,
+        reference_year= None,
         nb_timeseries_image =None,
         duplication_level_noise = None,
     ):
@@ -83,10 +85,10 @@ class GridDataset(Dataset):
         with rasterio.open(s2_vrt_path) as src:
             transform_c = src.transform.c
             transform_f = src.transform.f
-            if resolution is None:
-                self.resolution = src.transform.a
+            if input_resolution is None:
+                self.input_resolution = src.transform.a
             else:
-                self.resolution = resolution
+                self.input_resolution = input_resolution
 
         if bounds is not None:
             bounds = adjust_bounds_to_1point5_res(transform_c, transform_f, bounds)
@@ -97,7 +99,10 @@ class GridDataset(Dataset):
         self.crop_size = crop_size  # equivalent to stride of 2*crop_size
         # tansform refers here to the transformation of the input, not the projection
         self.transform = transform
-        self.reference_date = reference_date
+        self.target_resolution = target_resolution
+
+        reference_date = {"2022" : "20220215", "2023": "20230915"}
+        self.reference_date = reference_date[reference_year]
         self.nb_timeseries_image = nb_timeseries_image
         self.duplication_level_noise = duplication_level_noise
 
@@ -142,12 +147,12 @@ class GridDataset(Dataset):
             s2_image = get_window(
                 image_path=s2_vrt,
                 bounds=bounds,
-                resolution=self.resolution
+                resolution=self.input_resolution
             )
             s1_image = get_window(
                 image_path=s1_vrt,
                 bounds=bounds,
-                resolution=self.resolution
+                resolution=self.input_resolution
             )
             image = np.concatenate((s2_image,s1_image), axis=0)
             image = image.astype(np.float32).transpose(1, 2, 0)
@@ -175,8 +180,9 @@ class GridDataset(Dataset):
 
         input_date = torch.from_numpy(np.stack(input_date, axis=0))
         bounds = torch.tensor(bounds)
+        target_nb_pixel = int((bounds[3] - bounds[1])/self.target_resolution)
 
-        meta_data = {"bounds" : bounds, "dates" : input_date}
+        meta_data = {"bounds" : bounds, "dates" : input_date, "target_nb_pixel" : target_nb_pixel}
         return input, meta_data
 
     

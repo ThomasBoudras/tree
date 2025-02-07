@@ -1,55 +1,66 @@
 resolution: 1.5  # resolution at which to compute change, use bilinear interpolation on input images to match resolution if necessary
-delta_list: [-5, -10, -15, -20] # minimum change in height (in meters)
-min_area_list: [10, 25, 100, 200, 300, 400] # minimum area of a contiguous change of more than delta (in square meters)
-# delta_list: [-10] # minimum change in height (in meters)
-# min_area_list: [100] # minimum area of a contiguous change of more than delta (in square meters)
+threshold_list: 
+  threshold : [-5, -10, -15, -20] # minimum change in height (in meters)
+  percentage : [0.3, 0.5, 0.7]
+  treecover : [2]
+
+min_area_list: [10, 25, 100, 200, 300, 400] # minimum area of a contiguous change of more than threshold (in square meters)
+# threshold_list: [-10] # minimum change in height (in meters)
+# min_area_list: [100] # minimum area of a contiguous change of more than threshold (in square meters)
 classes_to_keep: [1, 2, 3, 4, 5, 6]  # classes on which to compute change metrics (cf. cf. https://geoservices.ign.fr/sites/default/files/2023-10/DC_LiDAR_HD_1-0_PTS.pdf)
 
-delta_fig: -10  # minimum change in height (in meters) used for plots
-min_area_fig: 100  # minimum area of a contiguous change of more than delta (in square meters) used for plots
+threshold_fig: 
+  threshold : -10  # minimum change in height (in meters) used for plots
+  percentage : 0.5
+  treecover : 2
+min_area_fig: 100  # minimum area of a contiguous change of more than threshold (in square meters) used for plots
 
-version : RCAN_UNet_SL1
-root_dir: /work/work/tree/logs/change_detections/
+model : Open_canopy
+nb_version : 1
+version : v${nb_version}_${model}
+data_dir : /work/data
+root_dir: /work/work/tree/logs
 extract_tif: true # extract a tif image from predictions with the same bounds as labels from which the mask is computed, and also extract masked images from labels to mask on
 
 year_1: 2022
 year_2: 2023
 
 labels_1:
-  path: ${root_dir}/data/lidar_1.tif
+  path: ${data_dir}/changes_detections/lidar_1.tif
   unit: dm # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
   mask_on: false
 
 labels_2:
-  path: ${root_dir}/data/lidar_2_m.tif
+  path: ${data_dir}/changes_detections/lidar_2_m.tif
   unit: m # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
   mask_on: true
 
 classification:
   year: 2022
-  path: ${root_dir}/data/lidar_classification.tif
+  path: ${data_dir}/changes_detections/lidar_classification.tif
   crs: 2154
 
 predictions_1:
-  path: /work/work/tree/logs/tree/${version}_predict_2022/predictions/SR_end_2_end/${version}_predict_2022/data/predictions.vrt
-  # path : ${root_dir}/data/open_canopy_predictions_1_m.tif
+  path: ${root_dir}/tree_predictions/${model}/${version}/predictions/Chantilly/${year_1}/${model}_${year_1}_pred_aoi.vrt
+  # path : ${data_dir}/changes_detections/open_canopy_predictions_1_m.tif
   unit: m # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
 
 predictions_2:
-  path: /work/work/tree/logs/tree/${version}_predict_2023/predictions/SR_end_2_end/${version}_predict_2023/data/predictions.vrt
-  # path : ${root_dir}/data/open_canopy_predictions_2_m.tif
+  path: ${root_dir}/tree_predictions/${model}/${version}/predictions/Chantilly/${year_2}/${model}_${year_2}_pred_aoi.vrt
+  # path : ${data_dir}/changes_detections/open_canopy_predictions_2_m.tif
   unit: m # m(meter), dm(decimeter), cm(centimeter)
   crs: 2154
 
 inputs_1:
-  path: /work/datasentinel/composites/chantilly/2022/02-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
+  path: ${data_dir}/sentinel/composites/chantilly/2022/s2/s2_EPSG2154.vrt
   crs: 2154
 
 inputs_2:
-  path: /work/datasentinel/composites/chantilly/2023/09-15_plus_minus_15_days/s2/s2_EPSG2154.vrt
+  path: ${data_dir}/sentinel/composites/chantilly/2023/s2/s2_EPSG2154.vrt
   crs: 2154
 
-save_dir: ${root_dir}/${version}/results
+save_dir : ${root_dir}/change_detections
+results_dir: ${save_dir}/${model}

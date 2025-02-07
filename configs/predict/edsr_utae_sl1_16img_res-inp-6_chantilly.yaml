@@ -1,0 +1,62 @@
+# @package _global_
+
+defaults:
+  - override /experiment: edsr_utae_sl1_16img_res-inp-6
+  - override /datamodule/dataset: null
+  - override /callbacks: null
+  - override /model/metrics: null
+
+
+seed: 12345 
+print_config: true
+
+aoi_name: Chantilly
+project : "tree_predictions"
+run_year: "2023"
+
+data_dir: /work/data
+input_path : ${data_dir}/sentinel/timeseries/chantilly/${run_year}
+ckpt_path : ${work_dir}/logs/tree/EDSR_UTAE_SL1_16img_res-inp-6/v1_EDSR_UTAE_SL1_16img_res-inp-6/best_checkpoints/epoch_026.ckpt
+load_just_weights: True
+
+# Chantilly changes predictions area 
+aoi_bounds: [654800, 6888800, 672600, 6904000]
+aoi_crs: 2154
+aoi_path: null  # path to a shapefile (any file that can be read by geopandas.read_file), only used if aoi_bounds is null
+split: test # select "test" tiles from "split" column (if aoi_path is not null)
+lidar_year: null # select "tiles" from "lidar_year" column that match lidar_year (if aoi_path is not null)
+
+normalization_constants_path: ${work_dir}/normalization_values_sentinel_1_2/  # FIXME put null for recent models, avoid this normalization_constants_path
+save_dir: ${log_dir}/predictions
+
+patch_size: 1500
+crop_size: 105
+num_workers: 8  # Use 0 for interactive mode or when calling predict_on_aoi main function several times (or deallocate workers?)
+batch_size: 1
+input_resolution : 6
+target_resolution : 1.5
+
+dataset :
+  _target_: src.datamodules.datasets.timeseries_grid_dataset.GridDataset
+  bounds : ${aoi_bounds}
+  vrt_path_base: ${input_path}
+  patch_size: ${patch_size}
+  crop_size: ${crop_size}
+  input_resolution : ${input_resolution}
+  target_resolution : ${target_resolution}
+  reference_year: ${run_year}
+  nb_timeseries_image : 32
+  duplication_level_noise : 80
+
+trainer:
+  accelerator: gpu
+  # strategy: ddp
+  num_nodes: 1
+  strategy: auto
+
+model:
+  instance:
+    train_metrics: null
+    val_metrics: null 
+    test_metrics: null
+    predictions_save_dir : ${save_dir}
